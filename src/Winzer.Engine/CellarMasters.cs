@@ -2,7 +2,11 @@ using Winzer.Engine.Data;
 
 namespace Winzer.Engine;
 
-public sealed record SkillInfo(string Icon, string Name, string Text);
+public sealed record SkillInfo(string Icon, string NameDe, string NameEn, string TextDe, string TextEn)
+{
+    public string Name => Lang.T(NameDe, NameEn);
+    public string Text => Lang.T(TextDe, TextEn);
+}
 
 /// <summary>
 /// Kellermeister mit Talent und Fähigkeiten: Er hebt die Güte jeder Lese, manche Weinarten (Sekt, Barrique)
@@ -12,12 +16,12 @@ public static class CellarMasters
 {
     public static readonly Dictionary<CellarSkill, SkillInfo> Skills = new()
     {
-        [CellarSkill.Sekt] = new("🍾", "Sekt", "beherrscht die Flaschengärung – Voraussetzung für Sekt"),
-        [CellarSkill.Barrique] = new("🛢️", "Barrique", "kennt den Ausbau im Eichenfass – Voraussetzung für Barriqueweine"),
-        [CellarSkill.Rotwein] = new("🍷", "Rotwein", "+3 Güte bei roten Sorten"),
-        [CellarSkill.Weisswein] = new("🥂", "Weißwein", "+3 Güte bei weißen Sorten"),
-        [CellarSkill.Edelsuess] = new("🍯", "Edelsüß", "+4 Güte ab Auslese-Mostgewicht (95 °Oe)"),
-        [CellarSkill.Sparsam] = new("💡", "Sparsam", "25 % weniger Kosten fürs Abfüllen und die Sektherstellung"),
+        [CellarSkill.Sekt] = new("🍾", "Sekt", "Sparkling", "beherrscht die Flaschengärung – Voraussetzung für Sekt", "masters bottle fermentation – required for sparkling wine"),
+        [CellarSkill.Barrique] = new("🛢️", "Barrique", "Barrique", "kennt den Ausbau im Eichenfass – Voraussetzung für Barriqueweine", "knows oak barrel aging – required for barrique wines"),
+        [CellarSkill.Rotwein] = new("🍷", "Rotwein", "Red wine", "+3 Güte bei roten Sorten", "+3 quality for red varieties"),
+        [CellarSkill.Weisswein] = new("🥂", "Weißwein", "White wine", "+3 Güte bei weißen Sorten", "+3 quality for white varieties"),
+        [CellarSkill.Edelsuess] = new("🍯", "Edelsüß", "Noble sweet", "+4 Güte ab Auslese-Mostgewicht (95 °Oe)", "+4 quality from Auslese must weight (95 °Oe)"),
+        [CellarSkill.Sparsam] = new("💡", "Sparsam", "Thrifty", "25 % weniger Kosten fürs Abfüllen und die Sektherstellung", "25% lower costs for bottling and sparkling wine production"),
     };
 
     const double ColorBonus = 3;
@@ -95,8 +99,8 @@ public static class CellarMasters
     public static string? ValidateHire(GameState state, Player player, int candidate)
     {
         var master = candidate >= 0 && candidate < state.CellarMasterCandidates.Count ? state.CellarMasterCandidates[candidate] : null;
-        if (master is null) return "Diese Bewerbung liegt nicht vor.";
-        if (player.Money < master.Salary) return $"Nicht genug Geld für das erste Gehalt ({Util.FormatEuro(master.Salary)}).";
+        if (master is null) return Lang.T("Diese Bewerbung liegt nicht vor.", "This application does not exist.");
+        if (player.Money < master.Salary) return Lang.En ? $"Not enough money for the first salary ({Util.FormatEuro(master.Salary)})." : $"Nicht genug Geld für das erste Gehalt ({Util.FormatEuro(master.Salary)}).";
         return null;
     }
 
@@ -112,14 +116,14 @@ public static class CellarMasters
         Util.AddLog(
             state,
             player.Id,
-            $"{master.Name} ist dein neuer Kellermeister ({Util.FormatEuro(master.Salary)}/Monat){(previous is not null ? $" und löst {previous.Name} ab" : "")}.");
+            Lang.En ? $"{master.Name} is your new cellar master ({Util.FormatEuro(master.Salary)}/month){(previous is not null ? $" and replaces {previous.Name}" : "")}." : $"{master.Name} ist dein neuer Kellermeister ({Util.FormatEuro(master.Salary)}/Monat){(previous is not null ? $" und löst {previous.Name} ab" : "")}.");
     }
 
     public static void Fire(GameState state, Player player)
     {
         var master = player.CellarMaster!;
         player.CellarMaster = null;
-        Util.AddLog(state, player.Id, $"Kellermeister {master.Name} ist entlassen.");
+        Util.AddLog(state, player.Id, Lang.En ? $"Cellar master {master.Name} has been dismissed." : $"Kellermeister {master.Name} ist entlassen.");
     }
 
     /// <summary>Kurzbeschreibung für Logbuch und Oberfläche</summary>
@@ -127,6 +131,6 @@ public static class CellarMasters
     {
         var skills = string.Join(", ", master.Skills.Select(s => Skills[s].Name));
         var bonus = master.Talent + Experience(master, year);
-        return $"+{Util.JsNumber(bonus)} Güte{(skills != "" ? $" · {skills}" : "")}";
+        return Lang.En ? $"+{Util.JsNumber(bonus)} quality{(skills != "" ? $" · {skills}" : "")}" : $"+{Util.JsNumber(bonus)} Güte{(skills != "" ? $" · {skills}" : "")}";
     }
 }

@@ -106,11 +106,11 @@ public static class Market
     /// <summary>Warum ein Wein nicht zur Prämierung angemeldet werden kann – null, wenn es geht</summary>
     public static string? CompetitionEntryProblem(Player player, BottleLot lot, CompetitionInfo competition)
     {
-        if (!lot.Registered) return "Nur amtlich geprüfte Weine dürfen teilnehmen.";
-        if (player.CompetitionEntries.Contains(lot.Id)) return "Der Wein ist bereits angemeldet.";
-        if (lot.Awards.Any(a => a.Competition == competition.Id)) return "Der Wein wurde hier schon prämiert.";
-        if (player.CompetitionEntries.Count >= competition.MaxEntries) return $"Höchstens {competition.MaxEntries} Weine pro Prämierung.";
-        if (player.Money < competition.Fee) return "Nicht genug Geld für die Teilnahmegebühr.";
+        if (!lot.Registered) return Lang.T("Nur amtlich geprüfte Weine dürfen teilnehmen.", "Only officially tested wines may take part.");
+        if (player.CompetitionEntries.Contains(lot.Id)) return Lang.T("Der Wein ist bereits angemeldet.", "The wine is already entered.");
+        if (lot.Awards.Any(a => a.Competition == competition.Id)) return Lang.T("Der Wein wurde hier schon prämiert.", "The wine has already been awarded here.");
+        if (player.CompetitionEntries.Count >= competition.MaxEntries) return Lang.En ? $"At most {competition.MaxEntries} wines per awards." : $"Höchstens {competition.MaxEntries} Weine pro Prämierung.";
+        if (player.Money < competition.Fee) return Lang.T("Nicht genug Geld für die Teilnahmegebühr.", "Not enough money for the entry fee.");
         return null;
     }
 

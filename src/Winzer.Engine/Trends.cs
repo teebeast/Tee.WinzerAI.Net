@@ -21,7 +21,7 @@ public static class Trends
         [.. Grapes.All.Keys.Select(grape => (TrendKey)(int)grape), TrendKey.Sekt, TrendKey.Rose];
 
     public static string TrendName(TrendKey key) =>
-        key == TrendKey.Sekt ? "Sekt" : key == TrendKey.Rose ? "Rosé" : Grapes.All[(GrapeId)(int)key].Name;
+        key == TrendKey.Sekt ? Lang.T("Sekt", "Sparkling wine") : key == TrendKey.Rose ? "Rosé" : Grapes.All[(GrapeId)(int)key].Name;
 
     static double Round(double value) => Js.Round(value * 100) / 100;
     static double Clamp(double value) => Math.Min(Economy.TrendRange.Max, Math.Max(Economy.TrendRange.Min, value));
@@ -62,8 +62,8 @@ public static class Trends
                         state,
                         null,
                         change > 0
-                            ? $"📈 Markttrend: {TrendName(key)} ist zunehmend gefragt – die Preise ziehen in den nächsten Monaten an."
-                            : $"📉 Markttrend: {TrendName(key)} kommt aus der Mode – die Preise geben in den nächsten Monaten nach.",
+                            ? Lang.En ? $"📈 Market trend: {TrendName(key)} is increasingly in demand – prices will rise over the coming months." : $"📈 Markttrend: {TrendName(key)} ist zunehmend gefragt – die Preise ziehen in den nächsten Monaten an."
+                            : Lang.En ? $"📉 Market trend: {TrendName(key)} is going out of fashion – prices will ease over the coming months." : $"📉 Markttrend: {TrendName(key)} kommt aus der Mode – die Preise geben in den nächsten Monaten nach.",
                         change > 0 ? LogTone.Good : LogTone.Bad);
                 }
             }

@@ -7,7 +7,10 @@ public enum Scene { Gut, Weinberg, Keller, Markt, Kontor, Dorf }
 /// <summary>Plan: Ziele, Ausbau und Preise · Review: Jahresrückblick · Show: Prämierung (alle Regelversion 2)</summary>
 public enum Overlay { None, Decision, Lexicon, Menu, Plan, Review, Show }
 
-public sealed record SceneInfo(Scene Scene, string Label, string Key);
+public sealed record SceneInfo(Scene Scene, string LabelDe, string LabelEn, string Key)
+{
+    public string Label => Lang.T(LabelDe, LabelEn);
+}
 
 /// <summary>
 /// Zustand der Oberfläche, der einen Neuaufbau überdauert: Szene, Reiter, Auswahl, aufgeschlagene Seiten.
@@ -16,12 +19,12 @@ public sealed class Navigator
 {
     public static readonly SceneInfo[] Scenes =
     [
-        new(Scene.Gut, "Gut", "1"),
-        new(Scene.Weinberg, "Weinberg", "2"),
-        new(Scene.Keller, "Keller", "3"),
-        new(Scene.Markt, "Markt", "4"),
-        new(Scene.Kontor, "Kontor", "5"),
-        new(Scene.Dorf, "Dorf", "6"),
+        new(Scene.Gut, "Gut", "Estate", "1"),
+        new(Scene.Weinberg, "Weinberg", "Vineyard", "2"),
+        new(Scene.Keller, "Keller", "Cellar", "3"),
+        new(Scene.Markt, "Markt", "Market", "4"),
+        new(Scene.Kontor, "Kontor", "Office", "5"),
+        new(Scene.Dorf, "Dorf", "Village", "6"),
     ];
 
     readonly Dictionary<Scene, int> tabs = [];

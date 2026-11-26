@@ -43,9 +43,9 @@ public static partial class MarketScene
         if (lots.Count == 0)
         {
             scene.With(EmptySlot(28, 276, 1202, 300,
-                "Noch kein Wein, der antreten könnte. Nur amtlich geprüfte Flaschen dürfen zur Prämierung – im Keller abfüllen und prüfen lassen."));
+                Lang.T("Noch kein Wein, der antreten könnte. Nur amtlich geprüfte Flaschen dürfen zur Prämierung – im Keller abfüllen und prüfen lassen.", "No wine that could compete yet. Only officially inspected bottles may enter the wine award – bottle and have them inspected in the cellar.")));
         }
-        if (pages > 1) scene.With(GridPager(session, "markt.entries", page, pages, "Seite", 920));
+        if (pages > 1) scene.With(GridPager(session, "markt.entries", page, pages, Lang.T("Seite", "Page"), 920));
 
         scene.With(AwardsInspector(session, selected, competition));
     }
@@ -58,12 +58,13 @@ public static partial class MarketScene
         var wait = MonthsUntil(competition.Month, state.Month);
         var monthName = Game.MonthNames[competition.Month - 1];
         panel.With(Kit.Text(competition.Name, 28, 14, 560, 42, 29, Theme.Gold, bold: true, serif: true));
-        panel.With(Kit.Text(wait == 0 ? $"Wertung Ende {monthName} – letzte Gelegenheit zum Anmelden!" : $"Wertung Ende {monthName} – noch {wait} {(wait == 1 ? "Monat" : "Monate")} zum Anmelden",
+        panel.With(Kit.Text(Lang.En ? (wait == 0 ? $"Judging at the end of {monthName} – last chance to enter!" : $"Judging at the end of {monthName} – {wait} {(wait == 1 ? "month" : "months")} left to enter")
+                : (wait == 0 ? $"Wertung Ende {monthName} – letzte Gelegenheit zum Anmelden!" : $"Wertung Ende {monthName} – noch {wait} {(wait == 1 ? "Monat" : "Monate")} zum Anmelden"),
             28, 58, 580, 28, 19, wait == 0 ? Theme.Gold : Theme.Cream, bold: wait == 0));
-        panel.With(Kit.Text($"Gebühr {Util.FormatEuro(competition.Fee)} je Wein · angemeldet {player.CompetitionEntries.Count} / {competition.MaxEntries}",
+        panel.With(Kit.Text(Lang.En ? $"Fee {Util.FormatEuro(competition.Fee)} per wine · entered {player.CompetitionEntries.Count} / {competition.MaxEntries}" : $"Gebühr {Util.FormatEuro(competition.Fee)} je Wein · angemeldet {player.CompetitionEntries.Count} / {competition.MaxEntries}",
             28, 88, 580, 28, 19, Theme.Cream));
         var other = Economy.Competitions.Values.First(c => c.Id != competition.Id);
-        panel.With(Kit.Text($"Wertung = Güte + Bonus der Stufe ± {Util.FormatNumber(JurySpread)} Punkte Tagesform. Danach: {other.Name} im {Game.MonthNames[other.Month - 1]} ({Util.FormatEuro(other.Fee)}).",
+        panel.With(Kit.Text(Lang.En ? $"Score = quality + level bonus ± {Util.FormatNumber(JurySpread)} points of daily form. Next: {other.Name} in {Game.MonthNames[other.Month - 1]} ({Util.FormatEuro(other.Fee)})." : $"Wertung = Güte + Bonus der Stufe ± {Util.FormatNumber(JurySpread)} Punkte Tagesform. Danach: {other.Name} im {Game.MonthNames[other.Month - 1]} ({Util.FormatEuro(other.Fee)}).",
             28, 120, 580, 46, 16, Theme.CreamSoft, maxLines: 2));
 
         for (var i = 0; i < MedalOrder.Length; i++)
@@ -72,9 +73,9 @@ public static partial class MarketScene
             var tile = Kit.Box(626 + i * 188, 16, 176, 140, Theme.GlassLight, 14);
             tile.With(Kit.Paint(0, 8, 64, 84, (c, w, h) => PaintMedal(c, 34, 56, 22, medal)));
             tile.With(Kit.Text(Economy.MedalNames[medal], 68, 14, 104, 30, 21, Theme.Cream, bold: true, serif: true));
-            tile.With(Kit.Text($"ab {Util.FormatNumber(competition.Thresholds[medal])}", 68, 44, 104, 34, 24, Theme.Gold, bold: true));
-            tile.With(Kit.Text($"+{Util.FormatNumber(competition.Points[medal])} Punkte", 14, 88, 150, 24, 16, Theme.Cream));
-            tile.With(Kit.Text($"+{Util.FormatNumber(competition.Reputation[medal])} Bekanntheit", 14, 110, 150, 24, 16, Theme.CreamSoft));
+            tile.With(Kit.Text(Lang.En ? $"from {Util.FormatNumber(competition.Thresholds[medal])}" : $"ab {Util.FormatNumber(competition.Thresholds[medal])}", 68, 44, 104, 34, 24, Theme.Gold, bold: true));
+            tile.With(Kit.Text(Lang.En ? $"+{Util.FormatNumber(competition.Points[medal])} points" : $"+{Util.FormatNumber(competition.Points[medal])} Punkte", 14, 88, 150, 24, 16, Theme.Cream));
+            tile.With(Kit.Text(Lang.En ? $"+{Util.FormatNumber(competition.Reputation[medal])} reputation" : $"+{Util.FormatNumber(competition.Reputation[medal])} Bekanntheit", 14, 110, 150, 24, 16, Theme.CreamSoft));
             panel.With(tile);
         }
         return panel;
@@ -94,9 +95,9 @@ public static partial class MarketScene
     {
         var sure = MedalAt(score - JurySpread, competition);
         var best = MedalAt(score + JurySpread - 0.01, competition);
-        if (best is not { } top) return "Keine Medaille in Reichweite";
-        if (sure == best) return $"{Economy.MedalNames[top]} so gut wie sicher";
-        return sure is { } floor ? $"{Economy.MedalNames[floor]} sicher, {Economy.MedalNames[top]} möglich" : $"{Economy.MedalNames[top]} möglich";
+        if (best is not { } top) return Lang.T("Keine Medaille in Reichweite", "No medal within reach");
+        if (sure == best) return Lang.En ? $"{Economy.MedalNames[top]} all but certain" : $"{Economy.MedalNames[top]} so gut wie sicher";
+        return Lang.En ? (sure is { } floor ? $"{Economy.MedalNames[floor]} certain, {Economy.MedalNames[top]} possible" : $"{Economy.MedalNames[top]} possible") : (sure is { } floor2 ? $"{Economy.MedalNames[floor2]} sicher, {Economy.MedalNames[top]} möglich" : $"{Economy.MedalNames[top]} möglich");
     }
 
     /// <summary>Skala 60–100 mit den Medaillenschwellen und der Spanne, in der die Wertung landen kann</summary>
@@ -137,21 +138,21 @@ public static partial class MarketScene
         var card = Kit.Card(x, y, LotWidth, 306, 16);
         card.With(Bottle(lot, 18, 16, 58, 174));
         card.With(Kit.Text(GrapeName(lot), 90, 16, 186, 54, 19, Theme.Ink, bold: true, maxLines: 2));
-        card.With(Kit.Text(KindName(lot).Length > 14 ? KindName(lot) : $"{KindName(lot)} · Jg. {lot.Vintage}", 90, 70, 186, 24, 16, Theme.InkSoft));
-        card.With(Kit.Text("Erwartete Wertung", 90, 100, 186, 22, 15, Theme.InkSoft));
+        card.With(Kit.Text(KindName(lot).Length > 14 ? KindName(lot) : $"{KindName(lot)} · {Lang.T("Jg.", "Vint.")} {lot.Vintage}", 90, 70, 186, 24, 16, Theme.InkSoft));
+        card.With(Kit.Text(Lang.T("Erwartete Wertung", "Expected score"), 90, 100, 186, 22, 15, Theme.InkSoft));
         card.With(Kit.Text(Util.FormatNumber(score), 90, 118, 80, 44, 32, Theme.Wine, bold: true, serif: true));
         card.With(Kit.Text($"± {Util.FormatNumber(JurySpread)}", 150, 132, 60, 24, 16, Theme.InkSoft));
         card.With(AwardDots(lot, 90, 164, 24));
         card.With(Kit.Paint(18, 200, LotWidth - 36, 28, (c, w, h) => PaintScoreBar(c, w, h, score, competition)));
         if (entered)
         {
-            card.With(Chip("angemeldet", 18, 238, LotWidth - 36, Theme.Good, Theme.Paper, 15));
+            card.With(Chip(Lang.T("angemeldet", "entered"), 18, 238, LotWidth - 36, Theme.Good, Theme.Paper, 15));
             card.With(Kit.Text(Outlook(score, competition), 18, 274, LotWidth - 36, 24, 16, Theme.Ink, bold: true, align: Align.Center));
         }
         else
         {
             card.With(Kit.Text(Outlook(score, competition), 18, 234, LotWidth - 36, 24, 17, Theme.Ink, bold: true));
-            card.With(Kit.Text(problem ?? $"Kann antreten · Gebühr {Util.FormatEuro(competition.Fee)}", 18, 258, LotWidth - 36, 44, 15, problem is null ? Theme.Good : Theme.Alert, maxLines: 2));
+            card.With(Kit.Text(problem ?? (Lang.En ? $"Can compete · fee {Util.FormatEuro(competition.Fee)}" : $"Kann antreten · Gebühr {Util.FormatEuro(competition.Fee)}"), 18, 258, LotWidth - 36, 44, 15, problem is null ? Theme.Good : Theme.Alert, maxLines: 2));
         }
         card.With(SelectionFrame(selected, LotWidth, 306));
         var id = lot.Id;
@@ -168,10 +169,11 @@ public static partial class MarketScene
 
         if (lot is null)
         {
-            card.With(Kit.Text("Prämierungen", 32, 28, 460, 46, 32, Theme.Ink, bold: true, serif: true));
-            card.With(Kit.Text("Medaillen bringen Punkte und Bekanntheit", 32, 74, 460, 28, 18, Theme.InkSoft));
+            card.With(Kit.Text(Lang.T("Prämierungen", "Wine awards"), 32, 28, 460, 46, 32, Theme.Ink, bold: true, serif: true));
+            card.With(Kit.Text(Lang.T("Medaillen bringen Punkte und Bekanntheit", "Medals bring points and reputation"), 32, 74, 460, 28, 18, Theme.InkSoft));
             card.With(Kit.Text(
-                $"Zweimal im Jahr bewertet eine Jury eingereichte Weine: im {Game.MonthNames[Economy.Competitions[CompetitionId.Regional].Month - 1]} die {Economy.Competitions[CompetitionId.Regional].Name}, im {Game.MonthNames[Economy.Competitions[CompetitionId.Bund].Month - 1]} die {Economy.Competitions[CompetitionId.Bund].Name}. Je Prämierung dürfen höchstens {competition.MaxEntries} geprüfte Weine antreten; angemeldete Flaschen bleiben bis zur Wertung im Lager.",
+                Lang.En ? $"Twice a year a jury judges submitted wines: in {Game.MonthNames[Economy.Competitions[CompetitionId.Regional].Month - 1]} the {Economy.Competitions[CompetitionId.Regional].Name}, in {Game.MonthNames[Economy.Competitions[CompetitionId.Bund].Month - 1]} the {Economy.Competitions[CompetitionId.Bund].Name}. At most {competition.MaxEntries} inspected wines may enter each award; entered bottles stay in stock until judging."
+                    : $"Zweimal im Jahr bewertet eine Jury eingereichte Weine: im {Game.MonthNames[Economy.Competitions[CompetitionId.Regional].Month - 1]} die {Economy.Competitions[CompetitionId.Regional].Name}, im {Game.MonthNames[Economy.Competitions[CompetitionId.Bund].Month - 1]} die {Economy.Competitions[CompetitionId.Bund].Name}. Je Prämierung dürfen höchstens {competition.MaxEntries} geprüfte Weine antreten; angemeldete Flaschen bleiben bis zur Wertung im Lager.",
                 32, 124, 460, 190, 19, Theme.Ink, maxLines: 7));
         }
         else
@@ -181,10 +183,10 @@ public static partial class MarketScene
             var bonus = score - lot.Quality;
             card.With(Bottle(lot, 426, 24, 50, 150));
             card.With(Kit.Text(GrapeName(lot), 32, 28, 384, 44, 32, Theme.Ink, bold: true, serif: true));
-            card.With(Kit.Text($"{KindName(lot)} · Jahrgang {lot.Vintage} · {Util.FormatNumber(lot.Bottles)} Fl.", 32, 74, 384, 28, 18, Theme.InkSoft));
-            card.With(Kit.Row("Güte", Util.FormatNumber(lot.Quality), 32, 118, 380, size: 19));
-            card.With(Kit.Row(lot.Sparkling ? "Bonus für Sekt" : "Bonus der Stufe", $"+{Util.FormatNumber(bonus)}", 32, 152, 380, size: 19));
-            card.With(Kit.Row("Erwartete Wertung", $"{Util.FormatNumber(score)} ± {Util.FormatNumber(JurySpread)}", 32, 186, 460, Theme.Wine, 19));
+            card.With(Kit.Text(Lang.En ? $"{KindName(lot)} · vintage {lot.Vintage} · {Util.FormatNumber(lot.Bottles)} btl." : $"{KindName(lot)} · Jahrgang {lot.Vintage} · {Util.FormatNumber(lot.Bottles)} Fl.", 32, 74, 384, 28, 18, Theme.InkSoft));
+            card.With(Kit.Row(Lang.T("Güte", "Quality"), Util.FormatNumber(lot.Quality), 32, 118, 380, size: 19));
+            card.With(Kit.Row(lot.Sparkling ? Lang.T("Bonus für Sekt", "Sparkling wine bonus") : Lang.T("Bonus der Stufe", "Level bonus"), $"+{Util.FormatNumber(bonus)}", 32, 152, 380, size: 19));
+            card.With(Kit.Row(Lang.T("Erwartete Wertung", "Expected score"), $"{Util.FormatNumber(score)} ± {Util.FormatNumber(JurySpread)}", 32, 186, 460, Theme.Wine, 19));
             card.With(Kit.Paint(32, 226, 460, 36, (c, w, h) => PaintScoreBar(c, w, h, score, competition)));
             foreach (var medal in MedalOrder)
             {
@@ -197,19 +199,19 @@ public static partial class MarketScene
             if (entered)
             {
                 card.With(Kit.Box(32, 334, 460, 84, Theme.C("#334d7a2a"), 16, Theme.Good, 3)
-                    .With(Kit.Text("Angemeldet", 22, 12, 416, 32, 21, Theme.Good, bold: true))
-                    .With(Kit.Text($"Die Jury wertet Ende {monthName}.", 22, 46, 416, 24, 16, Theme.InkSoft)));
+                    .With(Kit.Text(Lang.T("Angemeldet", "Entered"), 22, 12, 416, 32, 21, Theme.Good, bold: true))
+                    .With(Kit.Text(Lang.En ? $"The jury judges at the end of {monthName}." : $"Die Jury wertet Ende {monthName}.", 22, 46, 416, 24, 16, Theme.InkSoft)));
             }
             else
             {
-                card.With(Kit.Button($"Anmelden: {competition.Name}", 32, 334, 460, 84, () => session.Run(action), ButtonKind.Primary,
-                    $"Gebühr {Util.FormatEuro(competition.Fee)} · Wertung Ende {monthName}", session.Problem(action)));
+                card.With(Kit.Button(Lang.En ? $"Enter: {competition.Name}" : $"Anmelden: {competition.Name}", 32, 334, 460, 84, () => session.Run(action), ButtonKind.Primary,
+                    Lang.En ? $"Fee {Util.FormatEuro(competition.Fee)} · judging at the end of {monthName}" : $"Gebühr {Util.FormatEuro(competition.Fee)} · Wertung Ende {monthName}", session.Problem(action)));
             }
         }
 
         // Angemeldete Weine
         card.With(Rule(438));
-        card.With(Kit.Text("Angemeldet", 32, 452, 300, 30, 20, Theme.Ink, bold: true));
+        card.With(Kit.Text(Lang.T("Angemeldet", "Entered"), 32, 452, 300, 30, 20, Theme.Ink, bold: true));
         card.With(Kit.Text($"{player.CompetitionEntries.Count} / {competition.MaxEntries}", 332, 454, 160, 28, 19, Theme.Wine, bold: true, align: Align.End));
         var y = 490.0;
         foreach (var id in player.CompetitionEntries.Take(3))
@@ -218,8 +220,8 @@ public static partial class MarketScene
             var entryScore = Market.CompetitionBaseScore(entry);
             var row = Kit.Box(32, y, 460, 40, Theme.C("#33d9c7a3"), 10);
             if (MedalAt(entryScore, competition) is { } likely) row.With(Kit.Paint(8, 6, 28, 28, (c, w, h) => PaintMedal(c, 14, 14, 12, likely, ribbon: false)));
-            row.With(Kit.Text($"{GrapeName(entry)} {KindName(entry)} (Jg. {entry.Vintage})", 44, 8, 300, 26, 17, Theme.Ink, bold: true));
-            row.With(Kit.Text($"Wertung {Util.FormatNumber(entryScore)}", 330, 8, 120, 26, 17, Theme.InkSoft, align: Align.End));
+            row.With(Kit.Text(Lang.En ? $"{GrapeName(entry)} {KindName(entry)} (vintage {entry.Vintage})" : $"{GrapeName(entry)} {KindName(entry)} (Jg. {entry.Vintage})", 44, 8, 300, 26, 17, Theme.Ink, bold: true));
+            row.With(Kit.Text(Lang.En ? $"Score {Util.FormatNumber(entryScore)}" : $"Wertung {Util.FormatNumber(entryScore)}", 330, 8, 120, 26, 17, Theme.InkSoft, align: Align.End));
             var entryId = id;
             row.Tap(() => session.Nav.Select("markt.entry", entryId));
             card.With(row);
@@ -227,14 +229,14 @@ public static partial class MarketScene
         }
         if (player.CompetitionEntries.Count == 0)
         {
-            card.With(Kit.Text($"Noch kein Wein angemeldet. Bis zu {competition.MaxEntries} Weine dürfen antreten – die mit der höchsten erwarteten Wertung stehen links vorn.",
+            card.With(Kit.Text(Lang.En ? $"No wine entered yet. Up to {competition.MaxEntries} wines may compete – those with the highest expected score are at the front left." : $"Noch kein Wein angemeldet. Bis zu {competition.MaxEntries} Weine dürfen antreten – die mit der höchsten erwarteten Wertung stehen links vorn.",
                 32, y, 460, 76, 17, Theme.InkSoft, maxLines: 3));
         }
 
         // Vitrine
         card.With(Rule(640));
-        card.With(Kit.Text("Medaillen-Vitrine", 32, 654, 300, 30, 20, Theme.Ink, bold: true));
-        card.With(Kit.Text($"{player.Stats.Medals} gewonnen · {player.Stats.GoldMedals} Gold", 252, 656, 240, 28, 18, Theme.Wine, bold: true, align: Align.End));
+        card.With(Kit.Text(Lang.T("Medaillen-Vitrine", "Medal cabinet"), 32, 654, 300, 30, 20, Theme.Ink, bold: true));
+        card.With(Kit.Text(Lang.En ? $"{player.Stats.Medals} won · {player.Stats.GoldMedals} gold" : $"{player.Stats.Medals} gewonnen · {player.Stats.GoldMedals} Gold", 252, 656, 240, 28, 18, Theme.Wine, bold: true, align: Align.End));
         var trophies = player.Bottles.SelectMany(l => l.Awards.Select(a => (Award: a, Lot: l)))
             .OrderByDescending(t => t.Award.Year).ThenBy(t => Array.IndexOf(MedalOrder, t.Award.Medal)).Take(6).ToList();
         card.With(Kit.Paint(32, 694, 460, 176, (c, w, h) =>
@@ -247,14 +249,14 @@ public static partial class MarketScene
         for (var i = 0; i < trophies.Count; i++)
         {
             var award = trophies[i].Award;
-            card.With(Kit.Text($"{(award.Competition == CompetitionId.Bund ? "Krone" : "Regio")} J. {award.Year}", 32 + 10 + i * 74, 694 + 146, 74, 22, 14, Theme.CreamSoft, align: Align.Center));
+            card.With(Kit.Text(Lang.En ? $"{(award.Competition == CompetitionId.Bund ? "Crown" : "Regional")} yr {award.Year}" : $"{(award.Competition == CompetitionId.Bund ? "Krone" : "Regio")} J. {award.Year}", 32 + 10 + i * 74, 694 + 146, 74, 22, 14, Theme.CreamSoft, align: Align.Center));
         }
         if (trophies.Count == 0)
         {
-            card.With(Kit.Text(player.Stats.Medals > 0 ? "Die prämierten Weine sind verkauft – ihre Medaillen zählen weiter." : "Noch leer – die erste Medaille wartet.",
+            card.With(Kit.Text(player.Stats.Medals > 0 ? Lang.T("Die prämierten Weine sind verkauft – ihre Medaillen zählen weiter.", "The award-winning wines are sold – their medals still count.") : Lang.T("Noch leer – die erste Medaille wartet.", "Still empty – the first medal awaits."),
                 52, 694 + 60, 420, 30, 19, Theme.CreamSoft, align: Align.Center));
         }
-        card.With(Kit.Text(trophies.Count > 0 ? "Medaillen der Weine, die noch im Lager liegen." : "Jeder Wein kann je Prämierung nur einmal eine Medaille holen.",
+        card.With(Kit.Text(trophies.Count > 0 ? Lang.T("Medaillen der Weine, die noch im Lager liegen.", "Medals of the wines still in stock.") : Lang.T("Jeder Wein kann je Prämierung nur einmal eine Medaille holen.", "Each wine can win only one medal per wine award."),
             32, 880, 460, 24, 16, Theme.InkSoft));
         return card;
     }

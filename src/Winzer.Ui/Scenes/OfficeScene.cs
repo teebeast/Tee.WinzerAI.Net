@@ -12,7 +12,9 @@ namespace Winzer.Ui.Scenes;
 /// </summary>
 public static class OfficeScene
 {
-    static readonly string[] TabNames = ["Finanzen", "Ausbau", "Chronik", "Erfolge"];
+    static string[] TabNames => Lang.En ? ["Finances", "Upgrades", "Chronicle", "Achievements"] : ["Finanzen", "Ausbau", "Chronik", "Erfolge"];
+
+    static readonly string[] CostLabelsEn = ["Staff", "Vineyards", "Crop protection", "Interest"];
 
     /// <summary>Kostenarten in fester Reihenfolge und Farbe – für Ring, Legende und Jahresverlauf</summary>
     static readonly (string Label, string Hex)[] CostKinds =
@@ -45,7 +47,7 @@ public static class OfficeScene
         switch (tab)
         {
             case 1:
-                caption = $"Absatz ab Hof: {Util.FormatNumber(RulesV2.DirectDemand(state, player))} Flaschen im Monat";
+                caption = Lang.En ? $"Cellar-door sales: {Util.FormatNumber(RulesV2.DirectDemand(state, player))} bottles per month" : $"Absatz ab Hof: {Util.FormatNumber(RulesV2.DirectDemand(state, player))} Flaschen im Monat";
                 Expansion(scene, session);
                 break;
             case 2:
@@ -55,7 +57,7 @@ public static class OfficeScene
                 caption = OfficeMilestones.Build(scene, session);
                 break;
             default:
-                caption = $"Laufende Kosten im {Game.MonthNames[state.Month - 1]}: {Util.FormatEuro(Market.MonthlyCosts(player, state.Month).Total)}";
+                caption = Lang.En ? $"Running costs in {Game.MonthNames[state.Month - 1]}: {Util.FormatEuro(Market.MonthlyCosts(player, state.Month).Total)}" : $"Laufende Kosten im {Game.MonthNames[state.Month - 1]}: {Util.FormatEuro(Market.MonthlyCosts(player, state.Month).Total)}";
                 Finance(scene, session);
                 break;
         }
@@ -74,16 +76,16 @@ public static class OfficeScene
         var free = Market.AvailableCredit(player);
 
         // Drei Kennzahlen
-        var konto = OfficeKit.Stat(28, "Konto", Util.FormatEuro(player.Money), player.Money < 0 ? Theme.Alert : Theme.Ink,
+        var konto = OfficeKit.Stat(28, Lang.T("Konto", "Account"), Util.FormatEuro(player.Money), player.Money < 0 ? Theme.Alert : Theme.Ink,
             player.Money < 0
-                ? $"Minus kostet {Js.Round(Economy.OverdraftInterestRate * 100)} % Zinsen p. a."
-                : $"nach den Monatskosten: {Util.FormatEuro(player.Money - costs.Total)}",
+                ? (Lang.En ? $"Overdraft costs {Js.Round(Economy.OverdraftInterestRate * 100)} % interest p. a." : $"Minus kostet {Js.Round(Economy.OverdraftInterestRate * 100)} % Zinsen p. a.")
+                : (Lang.En ? $"after monthly costs: {Util.FormatEuro(player.Money - costs.Total)}" : $"nach den Monatskosten: {Util.FormatEuro(player.Money - costs.Total)}"),
             "#c8962e");
-        var kredit = OfficeKit.Stat(435, "Kredit", Util.FormatEuro(player.Loan), Theme.Ink,
-            $"Rahmen {Util.FormatEuro(limit)} · frei {Util.FormatEuro(free)}", "#4a7fb5");
+        var kredit = OfficeKit.Stat(435, Lang.T("Kredit", "Loan"), Util.FormatEuro(player.Loan), Theme.Ink,
+            Lang.En ? $"Limit {Util.FormatEuro(limit)} · free {Util.FormatEuro(free)}" : $"Rahmen {Util.FormatEuro(limit)} · frei {Util.FormatEuro(free)}", "#4a7fb5");
         kredit.With(OfficeKit.Meter(250, 44, 110, 10, limit > 0 ? player.Loan / limit : 0, Theme.C("#4a7fb5")));
-        var worth = OfficeKit.Stat(842, "Reinvermögen", Util.FormatEuro(Market.NetWorth(player)), Theme.Ink,
-            $"Betriebswert {Util.FormatEuro(Market.AssetValue(player))} + Konto − Kredit", "#4d7a2a");
+        var worth = OfficeKit.Stat(842, Lang.T("Reinvermögen", "Net worth"), Util.FormatEuro(Market.NetWorth(player)), Theme.Ink,
+            Lang.En ? $"Business value {Util.FormatEuro(Market.AssetValue(player))} + account − loan" : $"Betriebswert {Util.FormatEuro(Market.AssetValue(player))} + Konto − Kredit", "#4d7a2a");
         scene.With(konto, kredit, worth);
 
         scene.With(CostCard(state, player, costs));
@@ -96,12 +98,12 @@ public static class OfficeScene
     {
         var card = Kit.Card(28, 262, 1202, 698);
         var month = Game.MonthNames[state.Month - 1];
-        card.With(Kit.Text($"Laufende Kosten im {month}", 36, 22, 700, 44, 30, Theme.Ink, bold: true, serif: true));
+        card.With(Kit.Text(Lang.En ? $"Running costs in {month}" : $"Laufende Kosten im {month}", 36, 22, 700, 44, 30, Theme.Ink, bold: true, serif: true));
         // Erweiterte Regeln: Der Winterzug bucht Januar und Februar ab, Ausbauten kosten zusätzlich Unterhalt
         var winter = RulesV2.On(state) && state.Month == 1;
         var buildings = RulesV2.On(state) ? player.Buildings.Sum(id => RulesV2.Building(id)?.MonthlyCost ?? 0) : 0;
-        var when = winter ? "im Winterzug für Januar und Februar abgebucht" : "werden am Monatsende abgebucht";
-        if (buildings > 0) when += $" · dazu {Util.FormatEuro(buildings)} Unterhalt für den Gutsausbau";
+        var when = winter ? Lang.T("im Winterzug für Januar und Februar abgebucht", "debited in the winter turn for January and February") : Lang.T("werden am Monatsende abgebucht", "debited at the end of the month");
+        if (buildings > 0) when += Lang.En ? $" · plus {Util.FormatEuro(buildings)} upkeep for estate upgrades" : $" · dazu {Util.FormatEuro(buildings)} Unterhalt für den Gutsausbau";
         card.With(Kit.Text(when, 520, 34, 646, 28, 18, Theme.InkSoft, align: Align.End));
 
         // Ringdiagramm
@@ -126,7 +128,7 @@ public static class OfficeScene
             }
         }));
         card.With(Kit.Text(Util.FormatEuro(costs.Total), 76, 190, 210, 44, 30, Theme.Ink, bold: true, serif: true, align: Align.Center));
-        card.With(Kit.Text("im Monat", 76, 232, 210, 26, 17, Theme.InkSoft, align: Align.Center));
+        card.With(Kit.Text(Lang.T("im Monat", "per month"), 76, 232, 210, 26, 17, Theme.InkSoft, align: Align.Center));
 
         // Legende mit Beträgen
         var fte = Market.StaffFte(player);
@@ -134,17 +136,17 @@ public static class OfficeScene
         var last = Game.MonthNames[Economy.ProtectionMonths.Max() - 1];
         string[] notes =
         [
-            $"{OfficeKit.Staff(fte)}{(player.CellarMaster is not null ? " + Kellermeister" : "")}{(player.HasVinothek ? " + Vinothek" : "")}",
-            $"Pflege von {Util.FormatNumber(Market.TotalHectares(player), 1)} ha, davon {Util.FormatNumber(Market.PlantedHectares(player), 1)} ha bestockt",
-            costs.Protection > 0 ? $"Spritzsaison {first} bis {last}" : $"fällt nur von {first} bis {last} an",
-            $"{Js.Round(Economy.LoanInterestRate * 100)} % p. a. auf den Kredit{(player.Money < 0 ? $", {Js.Round(Economy.OverdraftInterestRate * 100)} % auf das Minus" : "")}",
+            $"{OfficeKit.Staff(fte)}{(player.CellarMaster is not null ? Lang.T(" + Kellermeister", " + cellar master") : "")}{(player.HasVinothek ? Lang.T(" + Vinothek", " + wine room") : "")}",
+            Lang.En ? $"Care of {Util.FormatNumber(Market.TotalHectares(player), 1)} ha, of which {Util.FormatNumber(Market.PlantedHectares(player), 1)} ha planted" : $"Pflege von {Util.FormatNumber(Market.TotalHectares(player), 1)} ha, davon {Util.FormatNumber(Market.PlantedHectares(player), 1)} ha bestockt",
+            costs.Protection > 0 ? (Lang.En ? $"Spraying season {first} to {last}" : $"Spritzsaison {first} bis {last}") : (Lang.En ? $"only incurred from {first} to {last}" : $"fällt nur von {first} bis {last} an"),
+            Lang.En ? $"{Js.Round(Economy.LoanInterestRate * 100)} % p. a. on the loan{(player.Money < 0 ? $", {Js.Round(Economy.OverdraftInterestRate * 100)} % on the overdraft" : "")}" : $"{Js.Round(Economy.LoanInterestRate * 100)} % p. a. auf den Kredit{(player.Money < 0 ? $", {Js.Round(Economy.OverdraftInterestRate * 100)} % auf das Minus" : "")}",
         ];
         for (var i = 0; i < parts.Length; i++)
         {
             var y = 84 + i * 72;
             var row = Kit.Layer(372, y, 794, 66);
             row.With(Kit.Box(0, 5, 20, 20, Theme.C(CostKinds[i].Hex), 6));
-            row.With(Kit.Text(CostKinds[i].Label, 34, 0, 360, 32, 22, Theme.Ink, bold: true));
+            row.With(Kit.Text(Lang.En ? CostLabelsEn[i] : CostKinds[i].Label, 34, 0, 360, 32, 22, Theme.Ink, bold: true));
             row.With(Kit.Text(notes[i], 34, 31, 540, 26, 17, Theme.InkSoft));
             row.With(Kit.Text(parts[i] > 0 ? Util.FormatEuro(Js.Round(parts[i])) : "–", 574, 0, 220, 32, 22, Theme.Ink, bold: true, align: Align.End));
             row.With(Kit.Text(sum > 0 && parts[i] > 0 ? $"{Js.Round(parts[i] / sum * 100)} %" : "", 574, 31, 220, 26, 17, Theme.InkSoft, align: Align.End));
@@ -154,8 +156,8 @@ public static class OfficeScene
 
         // Jahresverlauf: die Kosten jedes Monats nach heutigem Stand
         card.With(Kit.Box(36, 384, 1130, 2, Theme.PaperLine));
-        card.With(Kit.Text("Jahresverlauf", 36, 398, 300, 34, 23, Theme.Wine, bold: true, serif: true));
-        card.With(Kit.Text("Monatskosten nach heutigem Stand, in Tausend Euro", 566, 404, 600, 26, 17, Theme.InkSoft, align: Align.End));
+        card.With(Kit.Text(Lang.T("Jahresverlauf", "Over the year"), 36, 398, 300, 34, 23, Theme.Wine, bold: true, serif: true));
+        card.With(Kit.Text(Lang.T("Monatskosten nach heutigem Stand, in Tausend Euro", "Monthly costs as of today, in thousand euros"), 566, 404, 600, 26, 17, Theme.InkSoft, align: Align.End));
         var year = Enumerable.Range(1, 12).Select(m => Market.MonthlyCosts(player, m)).ToArray();
         var top = Math.Max(1, year.Max(c => c.Total));
         const float chartHeight = 196, barSpace = 166, slot = 1130f / 12, barWidth = 58;
@@ -206,20 +208,20 @@ public static class OfficeScene
     {
         var player = session.Player;
         var card = OfficeKit.Inspector();
-        card.With(Kit.Text("Kredit", 32, 26, 460, 44, 32, Theme.Ink, bold: true, serif: true));
-        card.With(Kit.Text($"Die Bank leiht bis zu {Js.Round(Economy.LoanToValue * 100)} % des Betriebswerts.", 32, 70, 460, 28, 18, Theme.InkSoft));
+        card.With(Kit.Text(Lang.T("Kredit", "Loan"), 32, 26, 460, 44, 32, Theme.Ink, bold: true, serif: true));
+        card.With(Kit.Text(Lang.En ? $"The bank lends up to {Js.Round(Economy.LoanToValue * 100)} % of the business value." : $"Die Bank leiht bis zu {Js.Round(Economy.LoanToValue * 100)} % des Betriebswerts.", 32, 70, 460, 28, 18, Theme.InkSoft));
 
         var used = limit > 0 ? Math.Clamp(player.Loan / limit, 0, 1) : 0;
         card.With(Kit.Paint(32, 114, 132, 132, (c, w, h) =>
             Draw.Ring(c, 66, 66, 54, 16, used, SKColor.Parse("#d9c7a3"), used >= 1 ? SKColor.Parse("#b3261e") : Theme.SkWine)));
         card.With(Kit.Text($"{Js.Round(used * 100)} %", 32, 158, 132, 40, 28, Theme.Ink, bold: true, serif: true, align: Align.Center));
-        card.With(Kit.Row("Kredit", Util.FormatEuro(player.Loan), 192, 118, 300));
-        card.With(Kit.Row("Rahmen", Util.FormatEuro(limit), 192, 156, 300));
-        card.With(Kit.Row("Noch frei", Util.FormatEuro(free), 192, 194, 300, free <= 0 ? Theme.Alert : Theme.Good));
+        card.With(Kit.Row(Lang.T("Kredit", "Loan"), Util.FormatEuro(player.Loan), 192, 118, 300));
+        card.With(Kit.Row(Lang.T("Rahmen", "Limit"), Util.FormatEuro(limit), 192, 156, 300));
+        card.With(Kit.Row(Lang.T("Noch frei", "Still free"), Util.FormatEuro(free), 192, 194, 300, free <= 0 ? Theme.Alert : Theme.Good));
 
         card.With(Kit.Box(32, 262, 460, 2, Theme.PaperLine));
-        card.With(Kit.Row("Zinssatz", $"{Js.Round(Economy.LoanInterestRate * 100)} % p. a.", 32, 276, 460));
-        card.With(Kit.Row("Zinsen diesen Monat", Util.FormatEuro(Js.Round(costs.Interest)), 32, 312, 460));
+        card.With(Kit.Row(Lang.T("Zinssatz", "Interest rate"), $"{Js.Round(Economy.LoanInterestRate * 100)} % p. a.", 32, 276, 460));
+        card.With(Kit.Row(Lang.T("Zinsen diesen Monat", "Interest this month"), Util.FormatEuro(Js.Round(costs.Interest)), 32, 312, 460));
         card.With(Kit.Box(32, 356, 460, 2, Theme.PaperLine));
 
         // Betrag über Schnellwahl – keine Texteingabe
@@ -230,29 +232,29 @@ public static class OfficeScene
         var maxRepay = Math.Max(0, Math.Min(player.Loan, Math.Floor(player.Money)));
         var borrow = isMax ? maxBorrow : chosen;
         var repay = isMax ? maxRepay : chosen;
-        card.With(Kit.Text("Betrag wählen", 32, 370, 460, 30, 21, Theme.Ink, bold: true));
+        card.With(Kit.Text(Lang.T("Betrag wählen", "Choose amount"), 32, 370, 460, 30, 21, Theme.Ink, bold: true));
         for (var i = 0; i < QuickAmounts.Length; i++)
         {
             var amount = QuickAmounts[i];
             card.With(OfficeKit.Chip(Util.FormatNumber(amount.Value), 32 + i * 117, 408, 109, 46, amount.Key == key,
                 () => session.Nav.Select(AmountKey, amount.Key)));
         }
-        card.With(OfficeKit.Chip($"Maximum · leihen {Util.FormatEuro(maxBorrow)} · tilgen {Util.FormatEuro(maxRepay)}", 32, 464, 460, 46, isMax,
+        card.With(OfficeKit.Chip(Lang.En ? $"Maximum · borrow {Util.FormatEuro(maxBorrow)} · repay {Util.FormatEuro(maxRepay)}" : $"Maximum · leihen {Util.FormatEuro(maxBorrow)} · tilgen {Util.FormatEuro(maxRepay)}", 32, 464, 460, 46, isMax,
             () => session.Nav.Select(AmountKey, "max"), 17));
 
         var rate = Economy.LoanInterestRate / 12;
-        var over = session.Over ? "Die Partie ist beendet." : null;
-        var borrowProblem = over ?? (borrow <= 0 || free <= 0 ? "Der Kreditrahmen ist ausgeschöpft." : session.Problem(new GameAction.Borrow(borrow)));
-        card.With(Kit.Button($"{Util.FormatEuro(borrow)} aufnehmen", 32, 530, 460, 84, () => session.Run(new GameAction.Borrow(borrow)),
-            ButtonKind.Primary, $"sofort aufs Konto · Zinsen + {Util.FormatEuro(Js.Round(borrow * rate))} im Monat", borrowProblem));
+        var over = session.Over ? Lang.T("Die Partie ist beendet.", "The game is over.") : null;
+        var borrowProblem = over ?? (borrow <= 0 || free <= 0 ? Lang.T("Der Kreditrahmen ist ausgeschöpft.", "The credit limit is used up.") : session.Problem(new GameAction.Borrow(borrow)));
+        card.With(Kit.Button(Lang.En ? $"Borrow {Util.FormatEuro(borrow)}" : $"{Util.FormatEuro(borrow)} aufnehmen", 32, 530, 460, 84, () => session.Run(new GameAction.Borrow(borrow)),
+            ButtonKind.Primary, Lang.En ? $"straight to your account · interest + {Util.FormatEuro(Js.Round(borrow * rate))} per month" : $"sofort aufs Konto · Zinsen + {Util.FormatEuro(Js.Round(borrow * rate))} im Monat", borrowProblem));
         var repayProblem = over is not null ? over
-            : player.Loan <= 0 ? "Es ist kein Kredit offen."
-            : repay <= 0 ? "Nicht genug Geld auf dem Konto."
+            : player.Loan <= 0 ? Lang.T("Es ist kein Kredit offen.", "There is no open loan.")
+            : repay <= 0 ? Lang.T("Nicht genug Geld auf dem Konto.", "Not enough money in the account.")
             : session.Problem(new GameAction.Repay(repay)) is { } problem
-                ? (repay > player.Loan ? $"Offen sind nur {Util.FormatEuro(player.Loan)}." : problem)
+                ? (repay > player.Loan ? (Lang.En ? $"Only {Util.FormatEuro(player.Loan)} is outstanding." : $"Offen sind nur {Util.FormatEuro(player.Loan)}.") : problem)
                 : null;
-        card.With(Kit.Button($"{Util.FormatEuro(repay)} tilgen", 32, 626, 460, 84, () => session.Run(new GameAction.Repay(repay)),
-            ButtonKind.Secondary, $"vom Konto · spart {Util.FormatEuro(Js.Round(repay * rate))} Zinsen im Monat", repayProblem));
+        card.With(Kit.Button(Lang.En ? $"Repay {Util.FormatEuro(repay)}" : $"{Util.FormatEuro(repay)} tilgen", 32, 626, 460, 84, () => session.Run(new GameAction.Repay(repay)),
+            ButtonKind.Secondary, Lang.En ? $"from your account · saves {Util.FormatEuro(Js.Round(repay * rate))} interest per month" : $"vom Konto · spart {Util.FormatEuro(Js.Round(repay * rate))} Zinsen im Monat", repayProblem));
 
         // Insolvenzwarnung oder Erklärung
         if (player.MonthsInsolvent > 0)
@@ -260,18 +262,18 @@ public static class OfficeScene
             var left = Economy.InsolvencyMonths - player.MonthsInsolvent;
             var box = Kit.Box(32, 734, 460, 182, Theme.C("#1fb3261e"), 16, Theme.Alert, 3);
             box.With(Kit.Paint(20, 22, 44, 44, OfficeKit.WarningSign));
-            box.With(Kit.Text("Insolvenzwarnung!", 78, 22, 360, 40, 27, Theme.Alert, bold: true, serif: true));
+            box.With(Kit.Text(Lang.T("Insolvenzwarnung!", "Insolvency warning!"), 78, 22, 360, 40, 27, Theme.Alert, bold: true, serif: true));
             box.With(Kit.Text(
-                $"Das Konto ist im Minus und es ist kein Kreditrahmen mehr frei. Noch {left} Monat{(left == 1 ? "" : "e")} bis zur Insolvenz – verkaufe Wein oder Land.",
+                Lang.En ? $"Your account is overdrawn and no credit limit is left. {left} more month{(left == 1 ? "" : "s")} until insolvency – sell wine or land." : $"Das Konto ist im Minus und es ist kein Kreditrahmen mehr frei. Noch {left} Monat{(left == 1 ? "" : "e")} bis zur Insolvenz – verkaufe Wein oder Land.",
                 20, 76, 420, 96, 18, Theme.Ink, maxLines: 4));
             card.With(box);
         }
         else
         {
             var box = Kit.Box(32, 734, 460, 182, Theme.C("#33d9c7a3"), 16);
-            box.With(Kit.Text("Gut zu wissen", 20, 16, 420, 30, 20, Theme.Wine, bold: true, serif: true));
+            box.With(Kit.Text(Lang.T("Gut zu wissen", "Good to know"), 20, 16, 420, 30, 20, Theme.Wine, bold: true, serif: true));
             box.With(Kit.Text(
-                $"Ein Minus auf dem Konto kostet {Js.Round(Economy.OverdraftInterestRate * 100)} % Zinsen im Jahr. Ist das Konto im Minus und der Kreditrahmen ausgeschöpft, folgt nach {Economy.InsolvencyMonths} Monaten die Insolvenz. Mehr Land, Reben und Tanks erhöhen den Rahmen.",
+                Lang.En ? $"An overdrawn account costs {Js.Round(Economy.OverdraftInterestRate * 100)} % interest per year. If the account is overdrawn and the credit limit is used up, insolvency follows after {Economy.InsolvencyMonths} months. More land, vines and tanks raise the limit." : $"Ein Minus auf dem Konto kostet {Js.Round(Economy.OverdraftInterestRate * 100)} % Zinsen im Jahr. Ist das Konto im Minus und der Kreditrahmen ausgeschöpft, folgt nach {Economy.InsolvencyMonths} Monaten die Insolvenz. Mehr Land, Reben und Tanks erhöhen den Rahmen.",
                 20, 50, 420, 124, 17, Theme.InkSoft, maxLines: 5));
             card.With(box);
         }
@@ -292,18 +294,18 @@ public static class OfficeScene
         var withShop = player.Clone();
         withShop.HasOnlineShop = true;
         var shopGain = Demand(withShop) - demand;
-        var shop = UpgradeCard(28, "Online-Shop", player.HasOnlineShop, "läuft",
-            "Verkauft zusätzlich ins ganze Land – je bekannter das Gut, desto mehr Bestellungen.",
+        var shop = UpgradeCard(28, Lang.T("Online-Shop", "Online shop"), player.HasOnlineShop, Lang.T("läuft", "running"),
+            Lang.T("Verkauft zusätzlich ins ganze Land – je bekannter das Gut, desto mehr Bestellungen.", "Sells across the whole country as well – the better known the estate, the more orders."),
             (c, w, h) => PaintShop(c, w, h, player.HasOnlineShop));
-        shop.With(Kit.Row("Absatz ab Hof im Monat",
-            player.HasOnlineShop ? $"{Util.FormatNumber(demand)} Fl." : $"{Util.FormatNumber(demand)} → {Util.FormatNumber(demand + shopGain)} Fl.", 24, 300, 543, size: 19));
-        shop.With(Kit.Row("Laufende Kosten", "keine", 24, 332, 543, size: 19));
-        if (player.HasOnlineShop) shop.With(OfficeKit.Done("Der Online-Shop läuft", 16, 372, 559, 64));
+        shop.With(Kit.Row(Lang.T("Absatz ab Hof im Monat", "Cellar-door sales per month"),
+            player.HasOnlineShop ? $"{Util.FormatNumber(demand)} {Lang.T("Fl.", "btl.")}" : $"{Util.FormatNumber(demand)} → {Util.FormatNumber(demand + shopGain)} {Lang.T("Fl.", "btl.")}", 24, 300, 543, size: 19));
+        shop.With(Kit.Row(Lang.T("Laufende Kosten", "Running costs"), Lang.T("keine", "none"), 24, 332, 543, size: 19));
+        if (player.HasOnlineShop) shop.With(OfficeKit.Done(Lang.T("Der Online-Shop läuft", "The online shop is running"), 16, 372, 559, 64));
         else
         {
-            shop.With(Kit.Button("Online-Shop starten", 16, 372, 559, 64, () => session.Run(new GameAction.BuyOnlineShop()), ButtonKind.Primary,
-                $"kostet {Util.FormatEuro(Economy.OnlineShopCost)} · + {Util.FormatNumber(shopGain)} Flaschen Absatz im Monat",
-                session.Over ? "Die Partie ist beendet." : session.Problem(new GameAction.BuyOnlineShop())));
+            shop.With(Kit.Button(Lang.T("Online-Shop starten", "Launch online shop"), 16, 372, 559, 64, () => session.Run(new GameAction.BuyOnlineShop()), ButtonKind.Primary,
+                Lang.En ? $"costs {Util.FormatEuro(Economy.OnlineShopCost)} · + {Util.FormatNumber(shopGain)} bottles sold per month" : $"kostet {Util.FormatEuro(Economy.OnlineShopCost)} · + {Util.FormatNumber(shopGain)} Flaschen Absatz im Monat",
+                session.Over ? Lang.T("Die Partie ist beendet.", "The game is over.") : session.Problem(new GameAction.BuyOnlineShop())));
         }
         scene.With(shop);
 
@@ -311,31 +313,31 @@ public static class OfficeScene
         var withVinothek = player.Clone();
         withVinothek.HasVinothek = true;
         var percent = Js.Round((Economy.VinothekDemandFactor - 1) * 100);
-        var vinothek = UpgradeCard(639, "Vinothek", player.HasVinothek, "geöffnet",
-            $"Probierstube am Hof: + {percent} % Ab-Hof-Absatz und + {Util.FormatNumber(Economy.VinothekReputation)} Bekanntheit zur Eröffnung.",
+        var vinothek = UpgradeCard(639, Lang.T("Vinothek", "Wine room"), player.HasVinothek, Lang.T("geöffnet", "open"),
+            Lang.En ? $"Tasting room at the estate: + {percent} % cellar-door sales and + {Util.FormatNumber(Economy.VinothekReputation)} reputation on opening." : $"Probierstube am Hof: + {percent} % Ab-Hof-Absatz und + {Util.FormatNumber(Economy.VinothekReputation)} Bekanntheit zur Eröffnung.",
             (c, w, h) => PaintVinothek(c, w, h, player.HasVinothek));
-        vinothek.With(Kit.Row("Absatz ab Hof im Monat",
-            player.HasVinothek ? $"{Util.FormatNumber(demand)} Fl." : $"{Util.FormatNumber(demand)} → {Util.FormatNumber(Demand(withVinothek))} Fl.", 24, 300, 543, size: 19));
-        vinothek.With(Kit.Row("Laufende Kosten", $"{Util.FormatEuro(Economy.VinothekMonthlyCost)} im Monat", 24, 332, 543, size: 19));
-        if (player.HasVinothek) vinothek.With(OfficeKit.Done("Die Vinothek ist geöffnet", 16, 372, 559, 64));
+        vinothek.With(Kit.Row(Lang.T("Absatz ab Hof im Monat", "Cellar-door sales per month"),
+            player.HasVinothek ? $"{Util.FormatNumber(demand)} {Lang.T("Fl.", "btl.")}" : $"{Util.FormatNumber(demand)} → {Util.FormatNumber(Demand(withVinothek))} {Lang.T("Fl.", "btl.")}", 24, 300, 543, size: 19));
+        vinothek.With(Kit.Row(Lang.T("Laufende Kosten", "Running costs"), $"{Util.FormatEuro(Economy.VinothekMonthlyCost)} {Lang.T("im Monat", "per month")}", 24, 332, 543, size: 19));
+        if (player.HasVinothek) vinothek.With(OfficeKit.Done(Lang.T("Die Vinothek ist geöffnet", "The wine room is open"), 16, 372, 559, 64));
         else
         {
-            vinothek.With(Kit.Button("Vinothek bauen", 16, 372, 559, 64, () => session.Run(new GameAction.BuildVinothek()), ButtonKind.Primary,
-                $"kostet {Util.FormatEuro(Economy.VinothekCost)} · + {percent} % Absatz · + {Util.FormatNumber(Economy.VinothekReputation)} Bekanntheit",
-                session.Over ? "Die Partie ist beendet." : session.Problem(new GameAction.BuildVinothek())));
+            vinothek.With(Kit.Button(Lang.T("Vinothek bauen", "Build wine room"), 16, 372, 559, 64, () => session.Run(new GameAction.BuildVinothek()), ButtonKind.Primary,
+                Lang.En ? $"costs {Util.FormatEuro(Economy.VinothekCost)} · + {percent} % sales · + {Util.FormatNumber(Economy.VinothekReputation)} reputation" : $"kostet {Util.FormatEuro(Economy.VinothekCost)} · + {percent} % Absatz · + {Util.FormatNumber(Economy.VinothekReputation)} Bekanntheit",
+                session.Over ? Lang.T("Die Partie ist beendet.", "The game is over.") : session.Problem(new GameAction.BuildVinothek())));
         }
         scene.With(vinothek);
 
         // Kellerkapazität: nur Anzeige, gebaut wird im Keller
         var usedTank = Rules.UsedTankHl(player);
-        scene.With(CapacityCard(session, 28, "Edelstahltanks", usedTank, player.TankCapacityHl,
-            "Mehr Platz für die Ernte. Was nicht in die Tanks passt, geht bei der Lese verloren.",
-            $"+ 100 hl kosten {Util.FormatEuro(100 * Economy.TankCostPerHl)}",
+        scene.With(CapacityCard(session, 28, Lang.T("Edelstahltanks", "Stainless steel tanks"), usedTank, player.TankCapacityHl,
+            Lang.T("Mehr Platz für die Ernte. Was nicht in die Tanks passt, geht bei der Lese verloren.", "More room for the harvest. Whatever doesn't fit in the tanks is lost at harvest."),
+            Lang.En ? $"+ 100 hl cost {Util.FormatEuro(100 * Economy.TankCostPerHl)}" : $"+ 100 hl kosten {Util.FormatEuro(100 * Economy.TankCostPerHl)}",
             (c, w, h) => PaintTanks(c, w, h, player.TankCapacityHl > 0 ? usedTank / player.TankCapacityHl : 0)));
         var usedOak = Rules.UsedBarriqueHl(player);
         scene.With(CapacityCard(session, 639, "Barrique", usedOak, player.BarriqueCapacityHl,
-            "Eichenfässer – vor allem Rotwein gewinnt an Güte. Nutzbar nur mit einem Kellermeister, der Barrique beherrscht.",
-            $"+ 100 hl kosten {Util.FormatEuro(100 * Economy.BarriqueCostPerHl)}",
+            Lang.T("Eichenfässer – vor allem Rotwein gewinnt an Güte. Nutzbar nur mit einem Kellermeister, der Barrique beherrscht.", "Oak barrels – red wine in particular gains quality. Usable only with a cellar master who masters barrique."),
+            Lang.En ? $"+ 100 hl cost {Util.FormatEuro(100 * Economy.BarriqueCostPerHl)}" : $"+ 100 hl kosten {Util.FormatEuro(100 * Economy.BarriqueCostPerHl)}",
             (c, w, h) => PaintBarrels(c, w, h, player.BarriqueCapacityHl > 0, player.BarriqueCapacityHl > 0 ? usedOak / player.BarriqueCapacityHl : 0)));
 
         scene.With(StaffInspector(session));
@@ -346,7 +348,7 @@ public static class OfficeScene
         var card = Kit.Card(x, 96, 591, 452);
         card.With(Kit.Paint(16, 16, 559, 172, picture));
         card.With(Kit.Text(name, 24, 198, 340, 42, 30, Theme.Ink, bold: true, serif: true));
-        card.With(OfficeKit.Tag(owned ? ownedWord : "fehlt noch", 415, 202, 152, owned));
+        card.With(OfficeKit.Tag(owned ? ownedWord : Lang.T("fehlt noch", "not yet"), 415, 202, 152, owned));
         card.With(Kit.Text(text, 24, 242, 543, 52, 18, Theme.InkSoft, maxLines: 2));
         return card;
     }
@@ -357,13 +359,13 @@ public static class OfficeScene
         var card = Kit.Card(x, 564, 591, 396);
         card.With(Kit.Paint(16, 16, 559, 144, picture));
         card.With(Kit.Text(name, 24, 168, 340, 40, 28, Theme.Ink, bold: true, serif: true));
-        card.With(OfficeKit.Tag(capacity > 0 ? $"{Util.FormatNumber(capacity)} hl" : "keins", 415, 170, 152, capacity > 0));
+        card.With(OfficeKit.Tag(capacity > 0 ? $"{Util.FormatNumber(capacity)} hl" : Lang.T("keins", "none"), 415, 170, 152, capacity > 0));
         card.With(OfficeKit.Meter(24, 216, 543, 14, capacity > 0 ? used / capacity : 0, capacity > 0 && used >= capacity ? Theme.Alert : Theme.Wine));
         card.With(Kit.Text(capacity > 0
-            ? $"belegt {Util.FormatNumber(used, 1)} von {Util.FormatNumber(capacity)} hl · {Util.FormatNumber(Math.Max(0, capacity - used), 1)} hl frei"
-            : "noch keine Fässer im Keller", 24, 236, 543, 26, 17, Theme.Ink, bold: true));
+            ? (Lang.En ? $"used {Util.FormatNumber(used, 1)} of {Util.FormatNumber(capacity)} hl · {Util.FormatNumber(Math.Max(0, capacity - used), 1)} hl free" : $"belegt {Util.FormatNumber(used, 1)} von {Util.FormatNumber(capacity)} hl · {Util.FormatNumber(Math.Max(0, capacity - used), 1)} hl frei")
+            : Lang.T("noch keine Fässer im Keller", "no barrels in the cellar yet"), 24, 236, 543, 26, 17, Theme.Ink, bold: true));
         card.With(Kit.Text(text, 24, 264, 543, 48, 17, Theme.InkSoft, maxLines: 2));
-        card.With(Kit.Button("Im Keller ausbauen ›", 16, 318, 559, 62, () => session.Nav.Go(Scene.Keller, 0), ButtonKind.Secondary, price));
+        card.With(Kit.Button(Lang.T("Im Keller ausbauen ›", "Expand in the cellar ›"), 16, 318, 559, 62, () => session.Nav.Go(Scene.Keller, 0), ButtonKind.Secondary, price));
         return card;
     }
 
@@ -376,8 +378,8 @@ public static class OfficeScene
         var fte = Market.StaffFte(player);
         var factor = Market.CostFactor(player);
         var card = OfficeKit.Inspector();
-        card.With(Kit.Text("Personal", 32, 26, 460, 44, 32, Theme.Ink, bold: true, serif: true));
-        card.With(Kit.Text($"Eine Vollzeitkraft je {Util.FormatNumber(Economy.HectaresPerWorker)} ha, mindestens eine – dazwischen in Teilzeit.",
+        card.With(Kit.Text(Lang.T("Personal", "Staff"), 32, 26, 460, 44, 32, Theme.Ink, bold: true, serif: true));
+        card.With(Kit.Text(Lang.En ? $"One full-time worker per {Util.FormatNumber(Economy.HectaresPerWorker)} ha, at least one – part-time in between." : $"Eine Vollzeitkraft je {Util.FormatNumber(Economy.HectaresPerWorker)} ha, mindestens eine – dazwischen in Teilzeit.",
             32, 70, 460, 52, 18, Theme.InkSoft, maxLines: 2));
 
         // Eine Figur je Kraft, die letzte anteilig gefüllt
@@ -394,7 +396,7 @@ public static class OfficeScene
             }
         }));
         card.With(Kit.Text(OfficeKit.Staff(fte), 32, 250, 460, 36, 25, Theme.Ink, bold: true, serif: true));
-        card.With(Kit.Text($"für {Util.FormatNumber(hectares, 1)} ha Rebland, davon {Util.FormatNumber(Market.PlantedHectares(player), 1)} ha bestockt",
+        card.With(Kit.Text(Lang.En ? $"for {Util.FormatNumber(hectares, 1)} ha of vineyard, of which {Util.FormatNumber(Market.PlantedHectares(player), 1)} ha planted" : $"für {Util.FormatNumber(hectares, 1)} ha Rebland, davon {Util.FormatNumber(Market.PlantedHectares(player), 1)} ha bestockt",
             32, 286, 460, 26, 18, Theme.InkSoft));
 
         card.With(Kit.Box(32, 322, 460, 2, Theme.PaperLine));
@@ -404,41 +406,41 @@ public static class OfficeScene
             card.With(Kit.Row(label, value, 32, y, 460, color));
             y += 36;
         }
-        Line("Lohn je Kraft", $"{Util.FormatEuro(Economy.WorkerSalary)} im Monat");
-        Line("Arbeiter im Weinberg", Util.FormatEuro(Js.Round(fte * Economy.WorkerSalary)));
-        Line("Kellermeister", player.CellarMaster is { } master ? Util.FormatEuro(master.Salary) : "keiner");
-        Line("Vinothek", player.HasVinothek ? Util.FormatEuro(Economy.VinothekMonthlyCost) : "–");
+        Line(Lang.T("Lohn je Kraft", "Wage per worker"), $"{Util.FormatEuro(Economy.WorkerSalary)} {Lang.T("im Monat", "per month")}");
+        Line(Lang.T("Arbeiter im Weinberg", "Vineyard workers"), Util.FormatEuro(Js.Round(fte * Economy.WorkerSalary)));
+        Line(Lang.T("Kellermeister", "Cellar master"), player.CellarMaster is { } master ? Util.FormatEuro(master.Salary) : Lang.T("keiner", "none"));
+        Line(Lang.T("Vinothek", "Wine room"), player.HasVinothek ? Util.FormatEuro(Economy.VinothekMonthlyCost) : "–");
         if (Math.Abs(factor - 1) > 0.001)
         {
             var change = Js.Round((factor - 1) * 100);
-            Line("Kostenlage", $"{(change > 0 ? "+" : "−")} {Math.Abs(change)} %", change > 0 ? Theme.Alert : Theme.Good);
+            Line(Lang.T("Kostenlage", "Cost level"), $"{(change > 0 ? "+" : "−")} {Math.Abs(change)} %", change > 0 ? Theme.Alert : Theme.Good);
         }
         card.With(Kit.Box(32, y + 4, 460, 2, Theme.PaperLine));
-        card.With(Kit.Row("Personal im Monat", Util.FormatEuro(Js.Round(costs.Salaries)), 32, y + 16, 460, Theme.Wine, 23));
+        card.With(Kit.Row(Lang.T("Personal im Monat", "Staff per month"), Util.FormatEuro(Js.Round(costs.Salaries)), 32, y + 16, 460, Theme.Wine, 23));
         y += 66;
 
         var perHectare = Util.FormatEuro(Economy.WorkerSalary / Economy.HectaresPerWorker);
         var note = hectares < Economy.HectaresPerWorker
-            ? $"Bis {Util.FormatNumber(Economy.HectaresPerWorker)} ha genügt eine Kraft. Danach kostet jeder weitere Hektar {perHectare} Lohn im Monat – Land kaufen heißt auch Leute einstellen."
-            : $"Jeder weitere Hektar kostet {perHectare} Lohn im Monat – Land kaufen heißt auch Leute einstellen. Brachen brauchen dieselben Kräfte wie Rebland.";
+            ? (Lang.En ? $"One worker is enough up to {Util.FormatNumber(Economy.HectaresPerWorker)} ha. After that, every further hectare costs {perHectare} in wages per month – buying land also means hiring people." : $"Bis {Util.FormatNumber(Economy.HectaresPerWorker)} ha genügt eine Kraft. Danach kostet jeder weitere Hektar {perHectare} Lohn im Monat – Land kaufen heißt auch Leute einstellen.")
+            : (Lang.En ? $"Every further hectare costs {perHectare} in wages per month – buying land also means hiring people. Fallow land needs the same workers as vineyard." : $"Jeder weitere Hektar kostet {perHectare} Lohn im Monat – Land kaufen heißt auch Leute einstellen. Brachen brauchen dieselben Kräfte wie Rebland.");
         card.With(Kit.Box(32, y, 460, 104, Theme.C("#33d9c7a3"), 16)
             .With(Kit.Text(note, 20, 12, 420, 80, 17, Theme.InkSoft, maxLines: 3)));
 
         // Was früher hier lag, ist umgezogen
         var v2 = RulesV2.On(state);
         var top = v2 ? 706.0 : 734;
-        card.With(Kit.Text("Anderswo zu finden", 32, top, 460, 28, 19, Theme.Wine, bold: true, serif: true));
-        card.With(Kit.Button("Kellermeister ›", 32, top + 34, 460, 60, () => session.Nav.Go(Scene.Keller), ButtonKind.Ghost,
-            "einstellen und entlassen im Keller", fontSize: 19));
-        card.With(Kit.Button("Marketing und Straußwirtschaft ›", 32, top + 102, 460, 60, () => session.Nav.Go(Scene.Markt), ButtonKind.Ghost,
-            "Bekanntheit und Ausschank im Markt", fontSize: 19));
+        card.With(Kit.Text(Lang.T("Anderswo zu finden", "Found elsewhere"), 32, top, 460, 28, 19, Theme.Wine, bold: true, serif: true));
+        card.With(Kit.Button(Lang.T("Kellermeister ›", "Cellar master ›"), 32, top + 34, 460, 60, () => session.Nav.Go(Scene.Keller), ButtonKind.Ghost,
+            Lang.T("einstellen und entlassen im Keller", "hire and dismiss in the cellar"), fontSize: 19));
+        card.With(Kit.Button(Lang.T("Marketing und Straußwirtschaft ›", "Marketing and wine tavern ›"), 32, top + 102, 460, 60, () => session.Nav.Go(Scene.Markt), ButtonKind.Ghost,
+            Lang.T("Bekanntheit und Ausschank im Markt", "reputation and serving in the market"), fontSize: 19));
         if (v2)
         {
-            card.With(Kit.Button("Weitere Ausbauten & Stiftung ›", 32, top + 170, 460, 60, () =>
+            card.With(Kit.Button(Lang.T("Weitere Ausbauten & Stiftung ›", "More upgrades & foundation ›"), 32, top + 170, 460, 60, () =>
             {
                 session.Nav.SetOverlayTab(1);
                 session.Nav.Show(Overlay.Plan);
-            }, ButtonKind.Ghost, "Schänke, Gästehaus, Brennerei, Schatzkammer", fontSize: 19));
+            }, ButtonKind.Ghost, Lang.T("Schänke, Gästehaus, Brennerei, Schatzkammer", "Tavern, guesthouse, distillery, treasury"), fontSize: 19));
         }
         return card;
     }
@@ -696,7 +698,7 @@ internal static class OfficeKit
 
     /// <summary>„1 Vollzeitkraft“ / „2,4 Vollzeitkräfte“</summary>
     public static string Staff(double fte) =>
-        Math.Abs(fte - 1) < 0.05 ? "1 Vollzeitkraft" : $"{Util.FormatNumber(fte, 1)} Vollzeitkräfte";
+        Math.Abs(fte - 1) < 0.05 ? Lang.T("1 Vollzeitkraft", "1 full-time worker") : Lang.En ? $"{Util.FormatNumber(fte, 1)} full-time workers" : $"{Util.FormatNumber(fte, 1)} Vollzeitkräfte";
 
     /// <summary>Kennzahl oben auf der Arbeitsfläche: Bezeichnung, großer Wert, Unterzeile</summary>
     public static SkiaShape Stat(double x, string label, string value, Color valueColor, string sub, string accentHex)
@@ -724,7 +726,7 @@ internal static class OfficeKit
         var chip = on
             ? Kit.Box(x, y, w, h, radius: h / 2, gradient: Kit.Vertical(Theme.Wine, Theme.WineDark))
             : Kit.Box(x, y, w, h, Theme.PaperLine, h / 2);
-        chip.With(Kit.Text(text, 6, (h - size * 1.4) / 2, w - 12, size * 1.5, size, on ? Theme.C("#fff6e6") : Theme.Ink, bold: true, align: Align.Center));
+        chip.With(Kit.Centered(text, 6, w - 12, h, size, on ? Theme.C("#fff6e6") : Theme.Ink, bold: true));
         chip.Tap(tap);
         return chip;
     }

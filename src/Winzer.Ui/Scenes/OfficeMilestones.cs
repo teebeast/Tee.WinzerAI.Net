@@ -28,7 +28,7 @@ internal static class OfficeMilestones
     static string Reward(Tier tier)
     {
         var reward = Milestones.TierRewards[tier];
-        return $"{reward.Name} · {Util.FormatNumber(reward.Points)} {(reward.Points == 1 ? "Punkt" : "Punkte")}";
+        return $"{reward.Name} · {Util.FormatNumber(reward.Points)} {(Lang.En ? (reward.Points == 1 ? "point" : "points") : (reward.Points == 1 ? "Punkt" : "Punkte"))}";
     }
 
     /// <summary>Baut den Reiter auf und liefert die Zeile für den Balken.</summary>
@@ -45,21 +45,21 @@ internal static class OfficeMilestones
         if (open.Count == 0)
         {
             scene.With(Kit.Card(28, 96, 1202, 196)
-                .With(Kit.Text("Alle Meilensteine erreicht!", 0, 50, 1202, 54, 38, Theme.Wine, bold: true, serif: true, align: Align.Center))
-                .With(Kit.Text("Mehr kann ein Weingut nicht erreichen.", 0, 112, 1202, 30, 20, Theme.InkSoft, align: Align.Center)));
+                .With(Kit.Text(Lang.T("Alle Meilensteine erreicht!", "All milestones reached!"), 0, 50, 1202, 54, 38, Theme.Wine, bold: true, serif: true, align: Align.Center))
+                .With(Kit.Text(Lang.T("Mehr kann ein Weingut nicht erreichen.", "An estate can't achieve more than this."), 0, 112, 1202, 30, 20, Theme.InkSoft, align: Align.Center)));
         }
         for (var i = 0; i < Math.Min(3, open.Count); i++)
         {
             var def = open[i];
             var p = Progress(state, player, def);
             var card = Kit.Card(28 + i * 407, 96, 388, 196);
-            card.With(Kit.Text(i == 0 ? "Nächstes Ziel" : $"Ziel {i + 1}", 132, 12, 110, 24, 16, Theme.Wine, bold: true));
+            card.With(Kit.Text(i == 0 ? Lang.T("Nächstes Ziel", "Next goal") : Lang.En ? $"Goal {i + 1}" : $"Ziel {i + 1}", 132, 12, 110, 24, 16, Theme.Wine, bold: true));
             card.With(Kit.Text(Reward(def.Tier), 232, 12, 140, 24, 16, Theme.InkSoft, align: Align.End));
             card.With(Medal(14, 44, 106, def, false, p.Ratio));
             card.With(Kit.Text(def.Name, 132, 34, 244, 34, 23, Theme.Ink, bold: true, serif: true));
             card.With(Kit.Text(def.Text, 132, 70, 244, 64, 15, Theme.InkSoft, maxLines: 3));
             card.With(OfficeKit.Meter(132, 140, 240, 12, p.Ratio, Theme.Wine));
-            card.With(Kit.Text(p.Target > 1 ? $"{Util.FormatNumber(p.Value)} / {Util.FormatNumber(p.Target)}" : "noch offen", 132, 157, 240, 24, 16, Theme.Ink, bold: true));
+            card.With(Kit.Text(p.Target > 1 ? $"{Util.FormatNumber(p.Value)} / {Util.FormatNumber(p.Target)}" : Lang.T("noch offen", "still open"), 132, 157, 240, 24, 16, Theme.Ink, bold: true));
             scene.With(card);
         }
 
@@ -67,7 +67,7 @@ internal static class OfficeMilestones
         var pages = (int)Math.Ceiling(all.Count / (double)PerPage);
         var page = session.Nav.Page(PageKey, pages);
         scene.With(Kit.Box(28, 304, 1202, 44, Theme.C("#b3fbf4e4"), 22));
-        scene.With(Kit.Text("Alle Meilensteine", 50, 309, 400, 34, 23, Theme.Wine, bold: true, serif: true));
+        scene.With(Kit.Text(Lang.T("Alle Meilensteine", "All milestones"), 50, 309, 400, 34, 23, Theme.Wine, bold: true, serif: true));
         scene.With(Kit.Pager(900, 308, 318, page, pages, p => session.Nav.SetPage(PageKey, p), dark: false));
         var shown = all.Skip(page * PerPage).Take(PerPage).ToList();
         for (var i = 0; i < shown.Count; i++)
@@ -98,14 +98,14 @@ internal static class OfficeMilestones
             else
             {
                 cell.With(OfficeKit.Meter(120, 156, 110, 10, p.Ratio, Theme.Wine));
-                cell.With(Kit.Text(p.Target > 1 ? $"{Util.FormatNumber(p.Value)} / {Util.FormatNumber(p.Target)}" : "noch offen",
+                cell.With(Kit.Text(p.Target > 1 ? $"{Util.FormatNumber(p.Value)} / {Util.FormatNumber(p.Target)}" : Lang.T("noch offen", "still open"),
                     236, 148, 142, 24, 15, Theme.Ink, bold: true, align: Align.End));
             }
             scene.With(cell);
         }
 
         scene.With(Balance(state, player, reached, points));
-        return $"{reached.Count} von {all.Count} Meilensteinen erreicht";
+        return Lang.En ? $"{reached.Count} of {all.Count} milestones reached" : $"{reached.Count} von {all.Count} Meilensteinen erreicht";
     }
 
     /// <summary>Plakette: Medaille in der Farbe der Stufe, offene blass mit Fortschrittsring</summary>
@@ -148,16 +148,16 @@ internal static class OfficeMilestones
     {
         var all = Milestones.All;
         var card = OfficeKit.Inspector();
-        card.With(Kit.Text("Erfolge", 32, 26, 460, 44, 32, Theme.Ink, bold: true, serif: true));
-        card.With(Kit.Text("Meilensteine bringen Punkte und etwas Bekanntheit.", 32, 70, 460, 28, 18, Theme.InkSoft));
+        card.With(Kit.Text(Lang.T("Erfolge", "Achievements"), 32, 26, 460, 44, 32, Theme.Ink, bold: true, serif: true));
+        card.With(Kit.Text(Lang.T("Meilensteine bringen Punkte und etwas Bekanntheit.", "Milestones bring points and some reputation."), 32, 70, 460, 28, 18, Theme.InkSoft));
 
         var share = reached.Count / (double)all.Count;
         card.With(Kit.Paint(32, 112, 150, 150, (c, w, h) => Draw.Ring(c, 75, 75, 62, 18, share, SKColor.Parse("#d9c7a3"), Theme.SkGoldDark)));
         card.With(Kit.Text(reached.Count.ToString(), 32, 150, 150, 50, 38, Theme.Ink, bold: true, serif: true, align: Align.Center));
-        card.With(Kit.Text($"von {all.Count}", 32, 196, 150, 24, 16, Theme.InkSoft, align: Align.Center));
-        card.With(Kit.Text($"{Util.FormatNumber(points)} {(points == 1 ? "Punkt" : "Punkte")}", 210, 136, 282, 48, 36, Theme.Wine, bold: true, serif: true));
-        card.With(Kit.Text("aus Meilensteinen", 210, 186, 282, 28, 19, Theme.InkSoft));
-        card.With(Kit.Text($"{all.Count - reached.Count} noch offen", 210, 214, 282, 28, 19, Theme.InkSoft));
+        card.With(Kit.Text(Lang.En ? $"of {all.Count}" : $"von {all.Count}", 32, 196, 150, 24, 16, Theme.InkSoft, align: Align.Center));
+        card.With(Kit.Text($"{Util.FormatNumber(points)} {(Lang.En ? (points == 1 ? "point" : "points") : (points == 1 ? "Punkt" : "Punkte"))}", 210, 136, 282, 48, 36, Theme.Wine, bold: true, serif: true));
+        card.With(Kit.Text(Lang.T("aus Meilensteinen", "from milestones"), 210, 186, 282, 28, 19, Theme.InkSoft));
+        card.With(Kit.Text(Lang.En ? $"{all.Count - reached.Count} still open" : $"{all.Count - reached.Count} noch offen", 210, 214, 282, 28, 19, Theme.InkSoft));
 
         // Stufen
         var y = 280.0;
@@ -176,7 +176,7 @@ internal static class OfficeMilestones
                 c.DrawCircle(22, 22, 15, face);
             }));
             row.With(Kit.Text(reward.Name, 70, 6, 200, 28, 20, Theme.Ink, bold: true));
-            row.With(Kit.Text($"+ {Util.FormatNumber(reward.Points)} {(reward.Points == 1 ? "Punkt" : "Punkte")} · + {Util.FormatNumber(reward.Reputation)} Bekanntheit",
+            row.With(Kit.Text(Lang.En ? $"+ {Util.FormatNumber(reward.Points)} {(reward.Points == 1 ? "point" : "points")} · + {Util.FormatNumber(reward.Reputation)} reputation" : $"+ {Util.FormatNumber(reward.Points)} {(reward.Points == 1 ? "Punkt" : "Punkte")} · + {Util.FormatNumber(reward.Reputation)} Bekanntheit",
                 70, 33, 290, 24, 15, Theme.InkSoft));
             row.With(Kit.Text($"{got} / {total}", 340, 16, 106, 32, 23, got == total ? Theme.Good : Theme.Ink, bold: true, serif: true, align: Align.End));
             card.With(row);
@@ -185,10 +185,10 @@ internal static class OfficeMilestones
 
         // Zuletzt erreicht
         card.With(Kit.Box(32, 506, 460, 2, Theme.PaperLine));
-        card.With(Kit.Text("Zuletzt erreicht", 32, 518, 460, 32, 22, Theme.Wine, bold: true, serif: true));
+        card.With(Kit.Text(Lang.T("Zuletzt erreicht", "Recently reached"), 32, 518, 460, 32, 22, Theme.Wine, bold: true, serif: true));
         if (reached.Count == 0)
         {
-            card.With(Kit.Text("Noch kein Meilenstein – die erste Lese bringt den ersten.", 32, 560, 460, 56, 18, Theme.InkSoft, maxLines: 2));
+            card.With(Kit.Text(Lang.T("Noch kein Meilenstein – die erste Lese bringt den ersten.", "No milestone yet – your first harvest brings the first."), 32, 560, 460, 56, 18, Theme.InkSoft, maxLines: 2));
         }
         y = 560;
         foreach (var def in reached.Take(5))
@@ -204,7 +204,7 @@ internal static class OfficeMilestones
             var left = all.Count - reached.Count;
             card.With(Kit.Paint(32, 790, 460, 132, Laurel));
             card.With(Kit.Text(left.ToString(), 162, 812, 200, 56, 44, Theme.GoldDark, bold: true, serif: true, align: Align.Center));
-            card.With(Kit.Text(left == 1 ? "Ziel wartet noch" : "Ziele warten noch", 112, 868, 300, 28, 18, Theme.InkSoft, align: Align.Center));
+            card.With(Kit.Text(Lang.En ? (left == 1 ? "goal still waiting" : "goals still waiting") : (left == 1 ? "Ziel wartet noch" : "Ziele warten noch"), 112, 868, 300, 28, 18, Theme.InkSoft, align: Align.Center));
         }
         return card;
     }

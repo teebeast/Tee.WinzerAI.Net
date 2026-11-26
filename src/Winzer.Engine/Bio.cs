@@ -33,16 +33,21 @@ public static class Bio
     public static string? ValidateBioLabel(GameState state, Player player)
     {
         var next = NextBioLabel(player);
-        if (next is null) return "Du trägst bereits das strengste Siegel.";
-        if (player.Protection != ProtectionStrategy.Bio) return "Ein Bio-Siegel gibt es nur mit Bio-Pflanzenschutz.";
+        if (next is null) return Lang.T("Du trägst bereits das strengste Siegel.", "You already hold the strictest seal.");
+        if (player.Protection != ProtectionStrategy.Bio) return Lang.T("Ein Bio-Siegel gibt es nur mit Bio-Pflanzenschutz.", "An organic seal requires organic crop protection.");
         var info = BioData.BioLabels[next.Value];
         var wait = MonthsUntilEligible(state, player)!.Value;
         if (wait > 0)
         {
+            if (Lang.En)
+            {
+                var beforeEn = info.Requires is { } req ? BioData.BioLabels[req].Name : "conversion";
+                return $"{wait} more month{(wait == 1 ? "" : "s")} of {beforeEn} before {info.Name} can be applied for.";
+            }
             var before = info.Requires is { } required ? BioData.BioLabels[required].Name : "Umstellung";
             return $"Noch {wait} Monat{(wait == 1 ? "" : "e")} {before}, bevor {info.Name} beantragt werden kann.";
         }
-        if (player.Money < info.Fee) return $"Nicht genug Geld für die Zertifizierung ({Util.FormatEuro(info.Fee)}).";
+        if (player.Money < info.Fee) return Lang.En ? $"Not enough money for certification ({Util.FormatEuro(info.Fee)})." : $"Nicht genug Geld für die Zertifizierung ({Util.FormatEuro(info.Fee)}).";
         return null;
     }
 
@@ -57,7 +62,7 @@ public static class Bio
         Util.AddLog(
             state,
             null,
-            $"{info.Icon} {player.Name} ist jetzt {info.Name}-zertifiziert (+{Util.JsNumber(Js.Round(info.PriceBonus * 100))} % auf die Flaschenpreise).",
+            Lang.En ? $"{info.Icon} {player.Name} is now {info.Name}-certified (+{Util.JsNumber(Js.Round(info.PriceBonus * 100))}% on bottle prices)." : $"{info.Icon} {player.Name} ist jetzt {info.Name}-zertifiziert (+{Util.JsNumber(Js.Round(info.PriceBonus * 100))} % auf die Flaschenpreise).",
             LogTone.Good);
     }
 
@@ -67,7 +72,7 @@ public static class Bio
         var label = BioData.BioInfo(player);
         player.BioLabel = null;
         player.BioLabelSince = null;
-        if (label is not null) Util.AddLog(state, null, $"{player.Name} verliert das {label.Name}-Siegel: {reason}.", LogTone.Bad);
+        if (label is not null) Util.AddLog(state, null, Lang.En ? $"{player.Name} loses the {label.Name} seal: {reason}." : $"{player.Name} verliert das {label.Name}-Siegel: {reason}.", LogTone.Bad);
     }
 
     /// <summary>Jahresbeginn: Kontroll- und Verbandsgebühren</summary>
@@ -76,6 +81,6 @@ public static class Bio
         var label = BioData.BioInfo(player);
         if (label is null) return;
         player.Money -= label.AnnualFee;
-        Util.AddLog(state, player.Id, $"Jahresgebühr für Kontrolle und Verband ({label.Name}): −{Util.FormatEuro(label.AnnualFee)}.");
+        Util.AddLog(state, player.Id, Lang.En ? $"Annual fee for inspection and association ({label.Name}): −{Util.FormatEuro(label.AnnualFee)}." : $"Jahresgebühr für Kontrolle und Verband ({label.Name}): −{Util.FormatEuro(label.AnnualFee)}.");
     }
 }

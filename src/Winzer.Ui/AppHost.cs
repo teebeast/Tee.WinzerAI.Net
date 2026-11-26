@@ -23,6 +23,20 @@ public sealed class AppHost(ISaveStore store, IAudio audio)
         return true;
     }
 
+    readonly bool language = UseStoredLanguage(store);
+
+    // Entwicklerhilfe: WINZER_LANG=en gilt, solange keine Sprache gespeichert ist (z. B. für --shot und --selbstspiel)
+    static bool UseStoredLanguage(ISaveStore store) =>
+        Lang.En = (store.GetSetting("language") ?? Environment.GetEnvironmentVariable("WINZER_LANG")) == "en";
+
+    /// <summary>Wechselt die Sprache aller Texte und merkt sie sich für den nächsten Start.</summary>
+    public void SetLanguage(bool english)
+    {
+        Lang.En = english;
+        Store.SetSetting("language", english ? "en" : "de");
+        Changed?.Invoke();
+    }
+
     public ISaveStore Store { get; } = store;
     public IAudio Audio { get; } = audio;
     /// <summary>Lizenzhinweise der mitgelieferten Fremdsoftware für die Lizenzseite</summary>
@@ -31,6 +45,19 @@ public sealed class AppHost(ISaveStore store, IAudio audio)
     /// <summary>Zustand des Hauptmenüs (Schritt, Auswahl), der einen Neuaufbau überdauert</summary>
     public MenuState Menu { get; } = new();
     public event Action? Changed;
+    /// <summary>Vollbild oder Fenster hat gewechselt; der Kopf richtet sein Fenster neu ein</summary>
+    public event Action? WindowModeChanged;
+
+    /// <summary>Vollbild (Standard) oder normales Fenster; gilt auch für den nächsten Start</summary>
+    public bool FullScreen => Store.GetSetting("window") != "window";
+
+    public void ToggleFullScreen()
+    {
+        Store.SetSetting("window", FullScreen ? "window" : "full");
+        WindowModeChanged?.Invoke();
+        Changed?.Invoke();
+    }
+
     /// <summary>Der Kopf soll die Anwendung beenden</summary>
     public event Action? QuitRequested;
 

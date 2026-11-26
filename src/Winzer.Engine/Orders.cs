@@ -71,6 +71,13 @@ public static class Orders
     /// <summary>Kurzbeschreibung des verlangten Weins, z. B. „Riesling Spätlese, Güte ab 70“</summary>
     public static string DescribeWine(CustomerOrder order)
     {
+        if (Lang.En)
+        {
+            var whatEn = order.Sparkling
+                ? "sparkling wine"
+                : $"{(order.Grape is { } g ? Grapes.All[g].Name : order.Color == GrapeColor.Rot ? "red wine" : order.Color == GrapeColor.Weiss ? "white wine" : "wine")}, at least {Quality.QualityInfo(order.MinLevel).Name}";
+            return $"{whatEn}, quality {Util.JsNumber(order.MinQuality)}+";
+        }
         var what = order.Sparkling
             ? "Sekt"
             : $"{(order.Grape is { } grape ? Grapes.All[grape].Name : order.Color == GrapeColor.Rot ? "Rotwein" : order.Color == GrapeColor.Weiss ? "Weißwein" : "Wein")}, mindestens {Quality.QualityInfo(order.MinLevel).Name}";
@@ -143,14 +150,14 @@ public static class Orders
         Util.AddLog(
             state,
             player.Id,
-            $"{order.Icon} Auftragsanfrage von {order.Customer}: {Util.JsNumber(order.Bottles)} Flaschen {DescribeWine(order)} – siehe Aufträge.",
+            Lang.En ? $"{order.Icon} Order request from {order.Customer}: {Util.JsNumber(order.Bottles)} bottles {DescribeWine(order)} – see Orders." : $"{order.Icon} Auftragsanfrage von {order.Customer}: {Util.JsNumber(order.Bottles)} Flaschen {DescribeWine(order)} – siehe Aufträge.",
             LogTone.Good);
     }
 
     public static string? ValidateAccept(Player player, string orderId)
     {
-        if (!player.OrderOffers.Any(o => o.Id == orderId)) return "Diese Anfrage liegt nicht (mehr) vor.";
-        if (player.Orders.Count >= MaxOrders) return $"Höchstens {MaxOrders} Aufträge gleichzeitig.";
+        if (!player.OrderOffers.Any(o => o.Id == orderId)) return Lang.T("Diese Anfrage liegt nicht (mehr) vor.", "This request is no longer available.");
+        if (player.Orders.Count >= MaxOrders) return Lang.En ? $"At most {MaxOrders} orders at the same time." : $"Höchstens {MaxOrders} Aufträge gleichzeitig.";
         return null;
     }
 
@@ -159,26 +166,26 @@ public static class Orders
         var order = player.OrderOffers.First(o => o.Id == orderId);
         player.OrderOffers = player.OrderOffers.Where(o => o.Id != orderId).ToList();
         player.Orders.Add(order);
-        Util.AddLog(state, player.Id, $"Auftrag von {order.Customer} angenommen: {Util.JsNumber(order.Bottles)} Flaschen bis {DeadlineText(order)}.");
+        Util.AddLog(state, player.Id, Lang.En ? $"Order from {order.Customer} accepted: {Util.JsNumber(order.Bottles)} bottles by {DeadlineText(order)}." : $"Auftrag von {order.Customer} angenommen: {Util.JsNumber(order.Bottles)} Flaschen bis {DeadlineText(order)}.");
     }
 
     public static string? ValidateDecline(Player player, string orderId) =>
-        player.OrderOffers.Any(o => o.Id == orderId) ? null : "Diese Anfrage liegt nicht (mehr) vor.";
+        player.OrderOffers.Any(o => o.Id == orderId) ? null : Lang.T("Diese Anfrage liegt nicht (mehr) vor.", "This request is no longer available.");
 
     public static void DeclineOrder(GameState state, Player player, string orderId)
     {
         var order = player.OrderOffers.First(o => o.Id == orderId);
         player.OrderOffers = player.OrderOffers.Where(o => o.Id != orderId).ToList();
-        Util.AddLog(state, player.Id, $"Anfrage von {order.Customer} abgelehnt.");
+        Util.AddLog(state, player.Id, Lang.En ? $"Request from {order.Customer} declined." : $"Anfrage von {order.Customer} abgelehnt.");
     }
 
     public static string? ValidateDeliver(Player player, string orderId)
     {
         var order = player.Orders.FirstOrDefault(o => o.Id == orderId);
-        if (order is null) return "Dieser Auftrag liegt nicht vor.";
+        if (order is null) return Lang.T("Dieser Auftrag liegt nicht vor.", "This order does not exist.");
         var available = EligibleBottles(player, order);
-        if (order.BioLabel is not null && available == 0) return "Der Kunde verlangt ein Bio-Siegel.";
-        if (available < order.Bottles) return $"Nur {Util.JsNumber(available)} von {Util.JsNumber(order.Bottles)} passenden, geprüften Flaschen im Lager.";
+        if (order.BioLabel is not null && available == 0) return Lang.T("Der Kunde verlangt ein Bio-Siegel.", "The customer requires an organic seal.");
+        if (available < order.Bottles) return Lang.En ? $"Only {Util.JsNumber(available)} of {Util.JsNumber(order.Bottles)} matching, tested bottles in stock." : $"Nur {Util.JsNumber(available)} von {Util.JsNumber(order.Bottles)} passenden, geprüften Flaschen im Lager.";
         return null;
     }
 
@@ -203,7 +210,7 @@ public static class Orders
         Util.AddLog(
             state,
             player.Id,
-            $"{order.Icon} {Util.JsNumber(order.Bottles)} Flaschen an {order.Customer} geliefert: +{Util.FormatEuro(revenue)}, +{Util.JsNumber(order.Points)} Punkte, Bekanntheit +{gain.ToString("F1", CultureInfo.InvariantCulture)}.",
+            Lang.En ? $"{order.Icon} {Util.JsNumber(order.Bottles)} bottles delivered to {order.Customer}: +{Util.FormatEuro(revenue)}, +{Util.JsNumber(order.Points)} points, reputation +{gain.ToString("F1", CultureInfo.InvariantCulture)}." : $"{order.Icon} {Util.JsNumber(order.Bottles)} Flaschen an {order.Customer} geliefert: +{Util.FormatEuro(revenue)}, +{Util.JsNumber(order.Points)} Punkte, Bekanntheit +{gain.ToString("F1", CultureInfo.InvariantCulture)}.",
             LogTone.Good);
     }
 
@@ -220,7 +227,7 @@ public static class Orders
             Util.AddLog(
                 state,
                 player.Id,
-                $"{order.Customer} wartet vergeblich auf {Util.JsNumber(order.Bottles)} Flaschen: Vertragsstrafe {Util.FormatEuro(penalty)}, Bekanntheit −{Util.JsNumber(OrderPenaltyReputation)}.",
+                Lang.En ? $"{order.Customer} waits in vain for {Util.JsNumber(order.Bottles)} bottles: contract penalty {Util.FormatEuro(penalty)}, reputation −{Util.JsNumber(OrderPenaltyReputation)}." : $"{order.Customer} wartet vergeblich auf {Util.JsNumber(order.Bottles)} Flaschen: Vertragsstrafe {Util.FormatEuro(penalty)}, Bekanntheit −{Util.JsNumber(OrderPenaltyReputation)}.",
                 LogTone.Bad);
         }
         player.Orders = player.Orders.Where(o => o.Deadline > now).ToList();
@@ -228,9 +235,13 @@ public static class Orders
 
     static readonly string[] Months = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
+    static readonly string[] MonthsEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
     /// <summary>„Oktober, Jahr 4“</summary>
     public static string MonthText(int month) =>
-        $"{Months[(month - 1) % 12]}, Jahr {(int)Math.Floor((month - 1) / 12.0) + 1}";
+        Lang.En
+            ? $"{MonthsEn[(month - 1) % 12]}, year {(int)Math.Floor((month - 1) / 12.0) + 1}"
+            : $"{Months[(month - 1) % 12]}, Jahr {(int)Math.Floor((month - 1) / 12.0) + 1}";
 
-    public static string DeadlineText(CustomerOrder order) => $"Ende {MonthText(order.Deadline)}";
+    public static string DeadlineText(CustomerOrder order) => Lang.En ? $"end of {MonthText(order.Deadline)}" : $"Ende {MonthText(order.Deadline)}";
 }

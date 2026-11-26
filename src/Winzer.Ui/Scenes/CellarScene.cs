@@ -13,7 +13,8 @@ namespace Winzer.Ui.Scenes;
 /// </summary>
 public static class CellarScene
 {
-    static readonly string[] TabLabels = ["Tanks & Fässer", "Flaschenlager", "Weinmarkt", "Kellermeister"];
+    // Als Eigenschaft, damit die Sprache beim Lesen gilt
+    static string[] TabLabels => [Lang.T("Tanks & Fässer", "Tanks & barrels"), Lang.T("Flaschenlager", "Bottle stock"), Lang.T("Weinmarkt", "Wine market"), Lang.T("Kellermeister", "Cellar master")];
 
     public static SkiaControl Build(GameSession session)
     {
@@ -96,18 +97,18 @@ internal static class CellarParts
     public static SkiaShape Inspector() => Kit.Card(1260, 20, 524, 948, 22);
 
     /// <summary>Preis je Flasche mit Cent</summary>
-    public static string Cents(double value) => value.ToString("#,##0.00", German) + " €";
+    public static string Cents(double value) => Lang.En ? "€" + value.ToString("#,##0.00", CultureInfo.InvariantCulture) : value.ToString("#,##0.00", German) + " €";
 
     public static string Hl(double value) => Util.FormatNumber(value, 1) + " hl";
 
-    public static string Months(int months) => months == 1 ? "1 Monat" : $"{months} Monate";
+    public static string Months(int months) => Lang.En ? (months == 1 ? "1 month" : $"{months} months") : (months == 1 ? "1 Monat" : $"{months} Monate");
 
     /// <summary>Bezeichnung aus <see cref="Rules.WineLabel"/>, geteilt in Namen und Jahrgang</summary>
     public static (string Name, string Vintage) NameOf(WineInfo wine)
     {
         var label = Rules.WineLabel(wine);
-        var cut = label.LastIndexOf(" (Jg.", StringComparison.Ordinal);
-        return (cut < 0 ? label : label[..cut], $"Jahrgang Jahr {wine.Vintage}");
+        var cut = label.LastIndexOf(" (", StringComparison.Ordinal);
+        return (cut < 0 ? label : label[..cut], Lang.En ? $"Vintage, year {wine.Vintage}" : $"Jahrgang Jahr {wine.Vintage}");
     }
 
     public static string GrapeName(WineInfo wine) => Grapes.All[wine.Grape].Name.Replace(" (PIWI)", "");
@@ -152,7 +153,7 @@ internal static class CellarParts
         Kit.Layer(x, y, 130, 160).With(
             Kit.Paint(0, 0, 130, 130, (c, w, h) => Draw.Ring(c, 65, 65, 52, 13, quality / 100, SKColor.Parse("#d9c7a3"), Theme.SkWine)),
             Kit.Text(Util.FormatNumber(quality), 0, 42, 130, 46, 35, Theme.Ink, bold: true, serif: true, align: Align.Center),
-            Kit.Text("Güte", 0, 132, 130, 26, 17, Theme.InkSoft, align: Align.Center));
+            Kit.Text(Lang.T("Güte", "Quality"), 0, 132, 130, 26, 17, Theme.InkSoft, align: Align.Center));
 
     public static string Arrow(TrendDirectionKind direction) =>
         direction == TrendDirectionKind.Up ? "↗" : direction == TrendDirectionKind.Down ? "↘" : "→";
@@ -226,14 +227,15 @@ internal static class CellarParts
     /// <summary>Warum Sekt oder Barrique gesperrt sind – null, wenn der Kellermeister beides kann</summary>
     public static string? MasterHint(Player player)
     {
-        if (player.CellarMaster is not { } master) return "Ohne Kellermeister gibt es weder Sekt noch Barriqueweine.";
+        if (player.CellarMaster is not { } master) return Lang.T("Ohne Kellermeister gibt es weder Sekt noch Barriqueweine.", "Without a cellar master there is neither sparkling wine nor barrique wine.");
         var missing = new List<string>();
-        if (!CellarMasters.HasSkill(player, CellarSkill.Sekt)) missing.Add("Sekt");
-        if (!CellarMasters.HasSkill(player, CellarSkill.Barrique)) missing.Add("den Barrique-Ausbau");
-        return missing.Count > 0 ? $"{master.Name} beherrscht {string.Join(" und ", missing)} nicht." : null;
+        if (!CellarMasters.HasSkill(player, CellarSkill.Sekt)) missing.Add(Lang.T("Sekt", "sparkling wine"));
+        if (!CellarMasters.HasSkill(player, CellarSkill.Barrique)) missing.Add(Lang.T("den Barrique-Ausbau", "barrique aging"));
+        return missing.Count > 0 ? (Lang.En ? $"{master.Name} cannot do {string.Join(" or ", missing)}." : $"{master.Name} beherrscht {string.Join(" und ", missing)} nicht.") : null;
     }
 
     /// <summary>Wo der Wein weggeht: „Ab Hof &amp; online gehen etwa … Flaschen im Monat weg.“</summary>
     public static string DemandText(Player player) =>
-        $"Ab Hof{(player.HasOnlineShop ? " & online" : "")}{(player.HasVinothek ? " & Vinothek" : "")} gehen etwa {Util.FormatNumber(Live.Demand(player))} Flaschen im Monat weg.";
+        Lang.En ? $"About {Util.FormatNumber(Live.Demand(player))} bottles a month sell at the cellar door{(player.HasOnlineShop ? " & online" : "")}{(player.HasVinothek ? " & wine room" : "")}."
+            : $"Ab Hof{(player.HasOnlineShop ? " & online" : "")}{(player.HasVinothek ? " & Vinothek" : "")} gehen etwa {Util.FormatNumber(Live.Demand(player))} Flaschen im Monat weg.";
 }

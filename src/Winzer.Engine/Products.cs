@@ -15,7 +15,7 @@ public static class Products
 
     /// <summary>Federweißer aus roten Trauben heißt Roter Rauscher.</summary>
     public static string FederweisserName(WineInfo batch) =>
-        Grapes.All[batch.Grape].Color == GrapeColor.Rot ? "Roter Rauscher" : "Federweißer";
+        Grapes.All[batch.Grape].Color == GrapeColor.Rot ? "Roter Rauscher" : Lang.T("Federweißer", "Federweisser");
 
     /// <summary>Hektoliter, die die Kundschaft in diesem Monat noch abnimmt</summary>
     public static double FederweisserCapacity(Player player)
@@ -32,14 +32,14 @@ public static class Products
 
     public static string? ValidateFederweisser(GameState state, Player player, string batchId, double hectoliters)
     {
-        if (!Economy.FederweisserMonths.Contains(state.Month)) return "Federweißer gibt es nur im September und Oktober.";
+        if (!Economy.FederweisserMonths.Contains(state.Month)) return Lang.T("Federweißer gibt es nur im September und Oktober.", "Federweisser is only available in September and October.");
         var batch = player.Cellar.Find(b => b.Id == batchId);
-        if (batch is null) return "Unbekannte Charge.";
-        if (!IsFreshMust(state, batch)) return "Federweißer wird nur aus frischem Most des neuen Jahrgangs gemacht.";
-        if (!(hectoliters > 0) || hectoliters > batch.Hectoliters) return "Ungültige Menge.";
+        if (batch is null) return Lang.T("Unbekannte Charge.", "Unknown batch.");
+        if (!IsFreshMust(state, batch)) return Lang.T("Federweißer wird nur aus frischem Most des neuen Jahrgangs gemacht.", "Federweisser is only made from fresh must of the new vintage.");
+        if (!(hectoliters > 0) || hectoliters > batch.Hectoliters) return Lang.T("Ungültige Menge.", "Invalid quantity.");
         var capacity = FederweisserCapacity(player);
-        if (capacity <= 0) return "Diesen Monat trinkt niemand mehr Federweißer.";
-        if (hectoliters > capacity) return $"Diesen Monat nimmt die Kundschaft nur noch {Util.JsNumber(capacity)} hl ab.";
+        if (capacity <= 0) return Lang.T("Diesen Monat trinkt niemand mehr Federweißer.", "Nobody drinks any more Federweisser this month.");
+        if (hectoliters > capacity) return Lang.En ? $"This month customers only take {Util.JsNumber(capacity)} hl more." : $"Diesen Monat nimmt die Kundschaft nur noch {Util.JsNumber(capacity)} hl ab.";
         return null;
     }
 
@@ -51,14 +51,14 @@ public static class Products
         player.Money += revenue;
         player.FederweisserThisMonth += hectoliters;
         Rules.RemoveBatchVolume(player, batch, hectoliters);
-        Util.AddLog(state, player.Id, $"{Util.JsNumber(hectoliters)} hl {name} aus {Grapes.All[batch.Grape].Name} verkauft: +{Util.FormatEuro(revenue)}.");
+        Util.AddLog(state, player.Id, Lang.En ? $"{Util.JsNumber(hectoliters)} hl of {name} from {Grapes.All[batch.Grape].Name} sold: +{Util.FormatEuro(revenue)}." : $"{Util.JsNumber(hectoliters)} hl {name} aus {Grapes.All[batch.Grape].Name} verkauft: +{Util.FormatEuro(revenue)}.");
     }
 
     public static string? ValidateStrauss(GameState state, Player player)
     {
-        if (!Economy.StraussStartMonths.Contains(state.Month)) return "Die Straußwirtschaft öffnet zwischen März und Oktober.";
-        if (player.StraussYear == state.Year) return "Die Straußwirtschaft hatte dieses Jahr schon geöffnet.";
-        if (player.Money < Economy.StraussCost) return $"Nicht genug Geld (benötigt {Util.FormatEuro(Economy.StraussCost)}).";
+        if (!Economy.StraussStartMonths.Contains(state.Month)) return Lang.T("Die Straußwirtschaft öffnet zwischen März und Oktober.", "The wine tavern opens between March and October.");
+        if (player.StraussYear == state.Year) return Lang.T("Die Straußwirtschaft hatte dieses Jahr schon geöffnet.", "The wine tavern has already been open this year.");
+        if (player.Money < Economy.StraussCost) return Lang.En ? $"Not enough money (needs {Util.FormatEuro(Economy.StraussCost)})." : $"Nicht genug Geld (benötigt {Util.FormatEuro(Economy.StraussCost)}).";
         return null;
     }
 
@@ -71,6 +71,6 @@ public static class Products
         Util.AddLog(
             state,
             player.Id,
-            $"🌳 Die Straußwirtschaft hat geöffnet ({Util.FormatEuro(Economy.StraussCost)}): vier Monate mehr Gäste, Bekanntheit +{gain.ToString("F1", CultureInfo.InvariantCulture)}.");
+            Lang.En ? $"🌳 The wine tavern has opened ({Util.FormatEuro(Economy.StraussCost)}): four months of more guests, reputation +{gain.ToString("F1", CultureInfo.InvariantCulture)}." : $"🌳 Die Straußwirtschaft hat geöffnet ({Util.FormatEuro(Economy.StraussCost)}): vier Monate mehr Gäste, Bekanntheit +{gain.ToString("F1", CultureInfo.InvariantCulture)}.");
     }
 }

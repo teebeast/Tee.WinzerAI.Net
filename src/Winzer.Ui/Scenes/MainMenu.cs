@@ -18,14 +18,14 @@ namespace Winzer.Ui.Scenes;
 /// </summary>
 public static class MainMenu
 {
-    internal const int Home = 0, StepMode = 1, StepRegion = 2, StepPlayers = 3, Saves = 4, Daily = 5, Licenses = 6;
+    internal const int Home = 0, StepMode = 1, StepRegion = 2, StepPlayers = 3, Saves = 4, Daily = 5, Licenses = 6, Settings = 7;
 
     public static SkiaControl Build(AppHost app)
     {
         var setup = MenuSetup.Of(app);
         var step = app.Menu.Step;
         var layer = Kit.Layer(0, 0, Kit.DesignWidth, Kit.DesignHeight);
-        var home = step is < StepMode or > Licenses;
+        var home = step is < StepMode or > Settings;
         layer.With(Kit.Paint(0, 0, Kit.DesignWidth, Kit.DesignHeight, (c, w, h) => MenuArt.Landscape(c, w, h, home)));
         if (!home) layer.With(Kit.Box(0, 0, Kit.DesignWidth, Kit.DesignHeight, Theme.C("#b8140a0e")));
         switch (step)
@@ -36,6 +36,7 @@ public static class MainMenu
             case Saves: MenuPages.SavesPage(layer, app, setup); break;
             case Daily: MenuPages.DailyPage(layer, app, setup); break;
             case Licenses: MenuPages.LicensesPage(layer, app); break;
+            case Settings: MenuPages.SettingsPage(layer, app); break;
             default: HomePage(layer, app, setup); break;
         }
         return layer;
@@ -65,7 +66,7 @@ public static class MainMenu
         var daily = Challenge.DailyChallenge(today);
         var best = app.Store.GetSetting("challenge." + today);
 
-        layer.With(Kit.Text("Übernimm ein Weingut mit 10 ha, keltere die besten Weine und miss dich mit klugen Computer-Winzern.",
+        layer.With(Kit.Text(Lang.T("Übernimm ein Weingut mit 10 ha, keltere die besten Weine und miss dich mit klugen Computer-Winzern.", "Take over a 10 ha estate, press the finest wines and measure yourself against clever computer winemakers."),
             116, 322, 700, 76, 25, Theme.Cream, maxLines: 2));
 
         var panel = Kit.Glass(104, 430, 560, 524, 24);
@@ -74,29 +75,32 @@ public static class MainMenu
         if (saves.Count > 0)
         {
             var slot = saves[0];
-            panel.With(Kit.Button("Weiterspielen", x, y, w, h, () => Start(app, setup, slot.State, slot.Id), ButtonKind.Primary,
+            panel.With(Kit.Button(Lang.T("Weiterspielen", "Continue"), x, y, w, h, () => Start(app, setup, slot.State, slot.Id), ButtonKind.Primary,
                 $"{MenuPages.SlotTitle(slot)} · {MenuPages.SlotWhen(slot.State)}", fontSize: 26));
         }
         else
         {
-            panel.With(Kit.Button("Weiterspielen", x, y, w, h, () => { }, ButtonKind.Dark, problem: "Noch kein Spielstand vorhanden", fontSize: 26));
+            panel.With(Kit.Button(Lang.T("Weiterspielen", "Continue"), x, y, w, h, () => { }, ButtonKind.Dark, problem: Lang.T("Noch kein Spielstand vorhanden", "No saved game yet"), fontSize: 26));
         }
         y += 98;
-        panel.With(Kit.Button("Neues Spiel", x, y, w, h, () => Go(app, StepMode), saves.Count > 0 ? ButtonKind.Dark : ButtonKind.Primary,
-            "Freies Spiel: Gebiet, Gegner und Spiellänge frei wählbar", fontSize: 26));
+        panel.With(Kit.Button(Lang.T("Neues Spiel", "New Game"), x, y, w, h, () => Go(app, StepMode), saves.Count > 0 ? ButtonKind.Dark : ButtonKind.Primary,
+            Lang.T("Freies Spiel: Gebiet, Gegner und Spiellänge frei wählbar", "Free game: choose region, rivals and game length"), fontSize: 26));
         y += 98;
-        panel.With(Kit.Button("Tages-Challenge", x, y, w, h, () => Go(app, Daily), ButtonKind.Dark,
-            $"{daily.Scenario.Name} · {(best is null ? "noch nicht gespielt" : $"Bestwert heute: {best} Punkte")}", fontSize: 26));
+        panel.With(Kit.Button(Lang.T("Tages-Challenge", "Daily Challenge"), x, y, w, h, () => Go(app, Daily), ButtonKind.Dark,
+            Lang.En ? $"{daily.Scenario.Name} · {(best is null ? "not played yet" : $"Best today: {best} points")}" : $"{daily.Scenario.Name} · {(best is null ? "noch nicht gespielt" : $"Bestwert heute: {best} Punkte")}", fontSize: 26));
         y += 98;
-        panel.With(Kit.Button("Spielstände", x, y, w, h, () => Go(app, Saves), ButtonKind.Dark,
-            saves.Count == 0 ? "Laden und löschen" : saves.Count == 1 ? "1 Spielstand · laden und löschen" : $"{saves.Count} Spielstände · laden und löschen", fontSize: 26));
+        panel.With(Kit.Button(Lang.T("Spielstände", "Saved games"), x, y, w, h, () => Go(app, Saves), ButtonKind.Dark,
+            saves.Count == 0 ? Lang.T("Laden und löschen", "Load and delete") : saves.Count == 1 ? Lang.T("1 Spielstand · laden und löschen", "1 saved game · load and delete") : Lang.En ? $"{saves.Count} saved games · load and delete" : $"{saves.Count} Spielstände · laden und löschen", fontSize: 26));
         y += 98;
-        panel.With(Kit.Button("Beenden", x, y, w, h, app.Quit, ButtonKind.Dark, "Jede Partie wird nach jedem Zug automatisch gespeichert", fontSize: 26));
+        panel.With(Kit.Button(Lang.T("Beenden", "Quit"), x, y, w, h, app.Quit, ButtonKind.Dark, Lang.T("Jede Partie wird nach jedem Zug automatisch gespeichert", "Every game is saved automatically after every turn"), fontSize: 26));
         layer.With(panel);
 
-        layer.With(Kit.Text("Alle Weingüter, Personen, Siegel und Prämierungen sind frei erfunden.", 116, 992, 640, 30, 19, Theme.CreamSoft));
+        layer.With(Kit.Text(Lang.T("Alle Weingüter, Personen, Siegel und Prämierungen sind frei erfunden.", "All estates, people, seals and wine awards are fictional."), 116, 992, 640, 30, 19, Theme.CreamSoft));
+        layer.With(Kit.Box(1450, 980, 198, 48, Theme.C("#99140a0e"), 24, Theme.GlassLine, 1.5)
+            .With(Kit.Centered("⚙️ " + Lang.T("Einstellungen", "Settings"), 0, 198, 48, 19, Theme.Cream))
+            .Tap(() => Go(app, Settings)));
         layer.With(Kit.Box(1660, 980, 150, 48, Theme.C("#99140a0e"), 24, Theme.GlassLine, 1.5)
-            .With(Kit.Text("Lizenzen", 0, 10, 150, 28, 19, Theme.Cream, align: Align.Center))
+            .With(Kit.Centered(Lang.T("Lizenzen", "Licenses"), 0, 150, 48, 19, Theme.Cream))
             .Tap(() => Go(app, Licenses)));
     }
 }
@@ -169,7 +173,7 @@ internal sealed class MenuSetup
         Difficulty = Difficulty,
         Players = Seats.Select((s, i) => new NewPlayer
         {
-            Name = s.Name.Trim().Length > 0 ? s.Name.Trim() : $"Spieler {i + 1}",
+            Name = s.Name.Trim().Length > 0 ? s.Name.Trim() : Lang.En ? $"Player {i + 1}" : $"Spieler {i + 1}",
             RegionId = s.RegionId,
             Ai = s.Ai,
         }).ToList(),
@@ -268,7 +272,7 @@ internal static class MenuUi
     /// <summary>Schrittanzeige des neuen Spiels: erledigte und aktueller Schritt in Gold, antippbar.</summary>
     public static SkiaControl StepBar(AppHost app, int step)
     {
-        string[] labels = ["Spielart und Ziel", "Gebiet wählen", "Mitspieler und Optionen"];
+        string[] labels = [Lang.T("Spielart und Ziel", "Mode and goal"), Lang.T("Gebiet wählen", "Choose region"), Lang.T("Mitspieler und Optionen", "Players and options")];
         double[] starts = [0, 304, 563];
         double[] widths = [190, 145, 255];
         var bar = Kit.Layer(Right - 880, 62, 880, 60);
@@ -313,9 +317,9 @@ internal static class MenuUi
     public static SkiaControl Cycler(double x, double y, double w, string text, Action previous, Action next, bool bold = false)
     {
         var box = Kit.Box(x, y, w, 52, Theme.C("#80ffffff"), 12, Theme.PaperLine, 2);
-        box.With(Kit.IconButton("‹", 5, 5, 42, previous, dark: false, tip: "Vorherige Auswahl"));
+        box.With(Kit.IconButton("‹", 5, 5, 42, previous, dark: false, tip: Lang.T("Vorherige Auswahl", "Previous choice")));
         box.With(Kit.Text(text, 50, 13, w - 100, 28, 18, Theme.Ink, bold: bold, align: Align.Center));
-        box.With(Kit.IconButton("›", w - 47, 5, 42, next, dark: false, tip: "Nächste Auswahl"));
+        box.With(Kit.IconButton("›", w - 47, 5, 42, next, dark: false, tip: Lang.T("Nächste Auswahl", "Next choice")));
         return box;
     }
 
@@ -344,7 +348,7 @@ internal static class MenuUi
         width = ChipWidth(text, size);
         var h = size * 2.1;
         return Kit.Box(x, y, width, h, fill ?? (dark ? Theme.GlassLight : Theme.C("#59d9c7a3")), h / 2)
-            .With(Kit.Text(text, 0, h / 2 - size * 0.72, width, size * 1.5, size, color ?? (dark ? Theme.Cream : Theme.Ink), align: Align.Center));
+            .With(Kit.Centered(text, 0, width, h, size, color ?? (dark ? Theme.Cream : Theme.Ink)));
     }
 }
 

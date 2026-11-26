@@ -46,10 +46,10 @@ internal static class OfficeChronicle
         scene.With(card);
         if (sheets.Count == 0)
         {
-            card.With(Kit.Text("Die Chronik ist noch leer", 0, 360, 1202, 50, 34, Theme.Ink, bold: true, serif: true, align: Align.Center));
-            card.With(Kit.Text("Was auf dem Weingut geschieht, wird hier Monat für Monat festgehalten.", 0, 416, 1202, 30, 20, Theme.InkSoft, align: Align.Center));
-            scene.With(OfficeKit.Inspector().With(Kit.Text("Chronik", 32, 26, 460, 44, 32, Theme.Ink, bold: true, serif: true)));
-            return "Noch keine Einträge";
+            card.With(Kit.Text(Lang.T("Die Chronik ist noch leer", "The chronicle is still empty"), 0, 360, 1202, 50, 34, Theme.Ink, bold: true, serif: true, align: Align.Center));
+            card.With(Kit.Text(Lang.T("Was auf dem Weingut geschieht, wird hier Monat für Monat festgehalten.", "Whatever happens on the estate is recorded here, month by month."), 0, 416, 1202, 30, 20, Theme.InkSoft, align: Align.Center));
+            scene.With(OfficeKit.Inspector().With(Kit.Text(Lang.T("Chronik", "Chronicle"), 32, 26, 460, 44, 32, Theme.Ink, bold: true, serif: true)));
+            return Lang.T("Noch keine Einträge", "No entries yet");
         }
 
         // Gespeichert wird der Abstand zur neuesten Seite – so ist ohne Blättern immer die neueste aufgeschlagen
@@ -59,13 +59,13 @@ internal static class OfficeChronicle
         var monthEntries = sheets.Where(s => s.Year == sheet.Year && s.Month == sheet.Month).SelectMany(s => s.Entries).ToList();
 
         // Kopf
-        card.With(Kit.Text($"{Game.MonthNames[sheet.Month - 1]} · Jahr {sheet.Year}", 40, 22, 620, 48, 34, Theme.Ink, bold: true, serif: true));
+        card.With(Kit.Text(Lang.En ? $"{Game.MonthNames[sheet.Month - 1]} · Year {sheet.Year}" : $"{Game.MonthNames[sheet.Month - 1]} · Jahr {sheet.Year}", 40, 22, 620, 48, 34, Theme.Ink, bold: true, serif: true));
         var good = monthEntries.Count(e => e.Tone == LogTone.Good);
         var bad = monthEntries.Count(e => e.Tone == LogTone.Bad);
-        var summary = $"{monthEntries.Count} {(monthEntries.Count == 1 ? "Eintrag" : "Einträge")}";
-        if (good > 0) summary += $" · {good} gute";
-        if (bad > 0) summary += $" · {bad} schlechte";
-        if (good + bad > 0) summary += good + bad == 1 ? " Nachricht" : " Nachrichten";
+        var summary = Lang.En ? $"{monthEntries.Count} {(monthEntries.Count == 1 ? "entry" : "entries")}" : $"{monthEntries.Count} {(monthEntries.Count == 1 ? "Eintrag" : "Einträge")}";
+        if (good > 0) summary += Lang.En ? $" · {good} good" : $" · {good} gute";
+        if (bad > 0) summary += Lang.En ? $" · {bad} bad" : $" · {bad} schlechte";
+        if (good + bad > 0) summary += Lang.En ? (good + bad == 1 ? " news item" : " news items") : (good + bad == 1 ? " Nachricht" : " Nachrichten");
         card.With(Kit.Text(summary, 660, 36, 502, 28, 19, Theme.InkSoft, align: Align.End));
         card.With(Kit.Box(40, 80, 1122, 2, Theme.PaperLine));
 
@@ -92,18 +92,18 @@ internal static class OfficeChronicle
         var older = index > 0;
         var newer = index < sheets.Count - 1;
         card.With(Kit.Box(40, 784, 1122, 2, Theme.PaperLine));
-        var back = Kit.Button("‹ Früher", 40, 798, 190, 52, () => { if (older) Open(index - 1); }, ButtonKind.Ghost, fontSize: 20, align: Align.Center);
-        var forth = Kit.Button("Später ›", 972, 798, 190, 52, () => { if (newer) Open(index + 1); }, ButtonKind.Ghost, fontSize: 20, align: Align.Center);
+        var back = Kit.Button(Lang.T("‹ Früher", "‹ Earlier"), 40, 798, 190, 52, () => { if (older) Open(index - 1); }, ButtonKind.Ghost, fontSize: 20, align: Align.Center);
+        var forth = Kit.Button(Lang.T("Später ›", "Later ›"), 972, 798, 190, 52, () => { if (newer) Open(index + 1); }, ButtonKind.Ghost, fontSize: 20, align: Align.Center);
         if (!older) back.Opacity = 0.35;
         if (!newer) forth.Opacity = 0.35;
         card.With(back, forth);
         var where = sheet.Parts > 1
-            ? $"{Game.MonthNames[sheet.Month - 1]}, Blatt {sheet.Part + 1} von {sheet.Parts} · Seite {index + 1} von {sheets.Count}"
-            : $"Seite {index + 1} von {sheets.Count}";
+            ? Lang.En ? $"{Game.MonthNames[sheet.Month - 1]}, sheet {sheet.Part + 1} of {sheet.Parts} · page {index + 1} of {sheets.Count}" : $"{Game.MonthNames[sheet.Month - 1]}, Blatt {sheet.Part + 1} von {sheet.Parts} · Seite {index + 1} von {sheets.Count}"
+            : Lang.En ? $"Page {index + 1} of {sheets.Count}" : $"Seite {index + 1} von {sheets.Count}";
         card.With(Kit.Text(where, 240, 811, 722, 28, 19, Theme.InkSoft, align: Align.Center));
 
         scene.With(Calendar(session, sheets, index, Open));
-        return $"Logbuch seit {Game.MonthNames[sheets[0].Month - 1]}, Jahr {sheets[0].Year}";
+        return Lang.En ? $"Logbook since {Game.MonthNames[sheets[0].Month - 1]}, year {sheets[0].Year}" : $"Logbuch seit {Game.MonthNames[sheets[0].Month - 1]}, Jahr {sheets[0].Year}";
     }
 
     /// <summary>Inspektor: Jahr wählen, Monat antippen</summary>
@@ -111,8 +111,8 @@ internal static class OfficeChronicle
     {
         var sheet = sheets[index];
         var card = OfficeKit.Inspector();
-        card.With(Kit.Text("Chronik", 32, 26, 460, 44, 32, Theme.Ink, bold: true, serif: true));
-        card.With(Kit.Text("Monat antippen, um ihn aufzuschlagen.", 32, 70, 460, 28, 18, Theme.InkSoft));
+        card.With(Kit.Text(Lang.T("Chronik", "Chronicle"), 32, 26, 460, 44, 32, Theme.Ink, bold: true, serif: true));
+        card.With(Kit.Text(Lang.T("Monat antippen, um ihn aufzuschlagen.", "Tap a month to open it."), 32, 70, 460, 28, 18, Theme.InkSoft));
 
         // Jahressprung: gleicher Monat im Nachbarjahr, sonst der nächstgelegene
         var years = sheets.Select(s => s.Year).Distinct().OrderBy(y => y).ToList();
@@ -130,9 +130,9 @@ internal static class OfficeChronicle
         var previous = Target(sheet.Year - 1);
         var next = Target(sheet.Year + 1);
         card.With(Kit.Box(32, 112, 460, 76, Theme.C("#40d9c7a3"), 18));
-        card.With(Kit.IconButton("‹", 44, 122, 56, () => open(previous ?? index), dark: false, enabled: previous is not null, tip: "Vorheriger Eintrag"));
-        card.With(Kit.IconButton("›", 424, 122, 56, () => open(next ?? index), dark: false, enabled: next is not null, tip: "Nächster Eintrag"));
-        card.With(Kit.Text($"Jahr {sheet.Year}", 110, 126, 304, 46, 33, Theme.Ink, bold: true, serif: true, align: Align.Center));
+        card.With(Kit.IconButton("‹", 44, 122, 56, () => open(previous ?? index), dark: false, enabled: previous is not null, tip: Lang.T("Vorheriger Eintrag", "Previous entry")));
+        card.With(Kit.IconButton("›", 424, 122, 56, () => open(next ?? index), dark: false, enabled: next is not null, tip: Lang.T("Nächster Eintrag", "Next entry")));
+        card.With(Kit.Text(Lang.En ? $"Year {sheet.Year}" : $"Jahr {sheet.Year}", 110, 126, 304, 46, 33, Theme.Ink, bold: true, serif: true, align: Align.Center));
 
         // Zwölf Monate
         for (var m = 1; m <= 12; m++)
@@ -151,7 +151,7 @@ internal static class OfficeChronicle
             {
                 var good = entries.Count(e => e.Tone == LogTone.Good);
                 var bad = entries.Count(e => e.Tone == LogTone.Bad);
-                cell.With(Kit.Text($"{entries.Count} {(entries.Count == 1 ? "Eintrag" : "Einträge")}", 12, 35, 124, 24, 16, on ? Theme.Ink : Theme.InkSoft));
+                cell.With(Kit.Text(Lang.En ? $"{entries.Count} {(entries.Count == 1 ? "entry" : "entries")}" : $"{entries.Count} {(entries.Count == 1 ? "Eintrag" : "Einträge")}", 12, 35, 124, 24, 16, on ? Theme.Ink : Theme.InkSoft));
                 var dx = 12.0;
                 if (good > 0)
                 {
@@ -172,13 +172,13 @@ internal static class OfficeChronicle
         // Jahresbilanz und Legende
         var yearEntries = sheets.Where(s => s.Year == sheet.Year).SelectMany(s => s.Entries).ToList();
         card.With(Kit.Box(32, 628, 460, 2, Theme.PaperLine));
-        card.With(Kit.Text($"Bilanz Jahr {sheet.Year}", 32, 640, 460, 32, 22, Theme.Wine, bold: true, serif: true));
-        Legend(card, 684, Theme.Good, "Gute Nachrichten", yearEntries.Count(e => e.Tone == LogTone.Good));
-        Legend(card, 722, Theme.Alert, "Schlechte Nachrichten", yearEntries.Count(e => e.Tone == LogTone.Bad));
-        Legend(card, 760, Theme.GoldDark, "Sonstige Einträge", yearEntries.Count(e => e.Tone is null));
+        card.With(Kit.Text(Lang.En ? $"Summary, year {sheet.Year}" : $"Bilanz Jahr {sheet.Year}", 32, 640, 460, 32, 22, Theme.Wine, bold: true, serif: true));
+        Legend(card, 684, Theme.Good, Lang.T("Gute Nachrichten", "Good news"), yearEntries.Count(e => e.Tone == LogTone.Good));
+        Legend(card, 722, Theme.Alert, Lang.T("Schlechte Nachrichten", "Bad news"), yearEntries.Count(e => e.Tone == LogTone.Bad));
+        Legend(card, 760, Theme.GoldDark, Lang.T("Sonstige Einträge", "Other entries"), yearEntries.Count(e => e.Tone is null));
 
-        card.With(Kit.Button("Zum neuesten Eintrag", 32, 836, 460, 76, () => open(sheets.Count - 1), ButtonKind.Secondary,
-            $"{Game.MonthNames[sheets[^1].Month - 1]}, Jahr {sheets[^1].Year}", index == sheets.Count - 1 ? "ist aufgeschlagen" : null));
+        card.With(Kit.Button(Lang.T("Zum neuesten Eintrag", "To the latest entry"), 32, 836, 460, 76, () => open(sheets.Count - 1), ButtonKind.Secondary,
+            Lang.En ? $"{Game.MonthNames[sheets[^1].Month - 1]}, year {sheets[^1].Year}" : $"{Game.MonthNames[sheets[^1].Month - 1]}, Jahr {sheets[^1].Year}", index == sheets.Count - 1 ? Lang.T("ist aufgeschlagen", "shown now") : null));
         return card;
     }
 

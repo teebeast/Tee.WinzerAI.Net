@@ -29,6 +29,7 @@ public partial class MainWindow : Window
         Root.Children.Add(surface);
         app.Changed += ScheduleRebuild;
         app.QuitRequested += Close;
+        app.WindowModeChanged += () => ApplyWindowMode(app.FullScreen);
         Root.SizeChanged += (_, _) => ScheduleRebuild();
         PreviewKeyDown += OnKey;
         Loaded += (_, _) => Rebuild();
@@ -64,31 +65,55 @@ public partial class MainWindow : Window
         Closed += (_, _) => frames.Stop();
     }
 
+    bool fillsWorkArea;
+    bool watchesWorkArea;
+
     /// <summary>
-    /// Für das normale Spiel: ohne Titelleiste und so groß wie der Arbeitsbereich des Bildschirms – die Taskleiste
-    /// bleibt sichtbar. (Ein rahmenloses Fenster im Zustand „maximiert“ würde sie überdecken.)
+    /// Für das normale Spiel: <paramref name="fullScreen"/> = ohne Titelleiste und so groß wie der Arbeitsbereich des
+    /// Bildschirms – die Taskleiste bleibt sichtbar. (Ein rahmenloses Fenster im Zustand „maximiert“ würde sie
+    /// überdecken.) Sonst ein normales Fenster mit Titelleiste, das sich verschieben, verkleinern und minimieren lässt.
     /// </summary>
-    public void FillWorkArea()
+    public void ApplyWindowMode(bool fullScreen)
     {
-        WindowStyle = WindowStyle.None;
-        ResizeMode = ResizeMode.NoResize;
+        fillsWorkArea = fullScreen;
         WindowStartupLocation = WindowStartupLocation.Manual;
-        MinWidth = 0;
-        MinHeight = 0;
-        void Fit()
+        var area = SystemParameters.WorkArea;
+        if (fullScreen)
         {
-            var area = SystemParameters.WorkArea;
-            Left = area.Left;
-            Top = area.Top;
-            Width = area.Width;
-            Height = area.Height;
+            WindowState = WindowState.Normal;
+            WindowStyle = WindowStyle.None;
+            ResizeMode = ResizeMode.NoResize;
+            MinWidth = 0;
+            MinHeight = 0;
+            Fit();
         }
-        Fit();
-        // Auflösung geändert oder Taskleiste verschoben: wieder einpassen
+        else
+        {
+            WindowStyle = WindowStyle.SingleBorderWindow;
+            ResizeMode = ResizeMode.CanResize;
+            MinWidth = Math.Min(1280, area.Width);
+            MinHeight = Math.Min(760, area.Height);
+            Width = Math.Min(1600, area.Width);
+            Height = Math.Min(940, area.Height);
+            Left = area.Left + (area.Width - Width) / 2;
+            Top = area.Top + (area.Height - Height) / 2;
+        }
+        if (watchesWorkArea) return;
+        watchesWorkArea = true;
+        // Auflösung geändert oder Taskleiste verschoben: im Vollbild wieder einpassen
         SystemParameters.StaticPropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(SystemParameters.WorkArea)) Fit();
+            if (fillsWorkArea && e.PropertyName == nameof(SystemParameters.WorkArea)) Fit();
         };
+    }
+
+    void Fit()
+    {
+        var area = SystemParameters.WorkArea;
+        Left = area.Left;
+        Top = area.Top;
+        Width = area.Width;
+        Height = area.Height;
     }
 
     /// <summary>Mehrere Änderungen in einem Zug führen zu einem einzigen Neuaufbau.</summary>

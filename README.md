@@ -12,6 +12,22 @@ Rundenbasierte Weingut-Simulation – Neuauflage von [Tee.WinzerAI](https://gith
 - [docs/leistung-drawnui.md](docs/leistung-drawnui.md) – Bildrate mit DrawnUi 1.10.8.25 und 1.10.8.26, warum das Spiel bei 1.10.8.25 bleibt
 - [docs/mockups](docs/mockups) – Entwürfe
 
+## English
+
+![The estate in May of year 2](docs/screenshot-en.png)
+
+WinzerAI is a turn-based wine estate simulation for Windows. Take over a 10 ha estate in one of Germany's 13 wine regions, tend your vineyards through frost, hail and drought, press and age your wines, and sell them at the cellar door, to wholesalers, to importers and at auctions. Up to four estates compete, against clever computer winemakers or other humans on the same device. The whole interface is drawn with DrawnUi on a single canvas.
+
+The game is fully playable in English: open **⚙️ Settings** in the main menu and pick **English**. The choice is saved and applies at once, also in a running game. Proper names stay German: wine regions, grape varieties, the German quality levels (Kabinett, Spätlese …) and the fictional estates.
+
+```powershell
+dotnet build Winzer.slnx
+dotnet test Winzer.slnx
+dotnet run --project src/Winzer.Desktop
+```
+
+For screenshots in English, set `WINZER_LANG=en` before `--shot` or `--selbstspiel` (used while no language is saved).
+
 ## Entwicklung
 
 ```powershell

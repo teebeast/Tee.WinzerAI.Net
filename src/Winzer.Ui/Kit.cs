@@ -1,3 +1,4 @@
+using Winzer.Engine;
 using DrawnUi.Draw;
 using DrawnUi.Views;
 using SkiaSharp;
@@ -269,6 +270,27 @@ public static class Kit
 
     static readonly SKTypeface SansFace = SKTypeface.FromFamilyName(Theme.Sans);
 
+    // Maße der Schrift je Punkt Schriftgröße: Grundlinie unter der Oberkante des Labels, Höhe der Großbuchstaben
+    static readonly (double Ascent, double Cap) SansMetrics = MeasureSans();
+
+    static (double, double) MeasureSans()
+    {
+        using var font = new SKFont(SansFace, 100);
+        var metrics = font.Metrics;
+        return (-metrics.Ascent / 100, metrics.CapHeight / 100);
+    }
+
+    /// <summary>
+    /// Oberkante eines einzeiligen Labels, damit die Buchstaben (Großbuchstabenhöhe bis Grundlinie) senkrecht in der
+    /// Mitte von <paramref name="center"/> sitzen. Die Zeilenbox selbst zu zentrieren setzt den Text zu tief, weil die
+    /// Schrift oberhalb der Großbuchstaben mehr Raum lässt als unter der Grundlinie.
+    /// </summary>
+    static double CapTop(double center, double size) => center - (SansMetrics.Ascent - SansMetrics.Cap / 2) * size;
+
+    /// <summary>Einzeiliger Text, dessen Buchstaben senkrecht mittig in einer Fläche der Höhe <paramref name="boxHeight"/> sitzen (Schilder, Reiter)</summary>
+    public static SkiaLabel Centered(string text, double x, double w, double boxHeight, double size, Color color, bool bold = false, Align align = Align.Center) =>
+        Text(text, x, CapTop(boxHeight / 2, size), w, size * 1.5, size, color, bold: bold, align: align);
+
     /// <summary>
     /// Gemessene Breite eines einzeiligen Textes in Entwurfseinheiten. Entscheidet, ob ein Text umbrechen muss –
     /// eine Schätzung über die Zeichenzahl lag oft daneben und reservierte dann Platz für eine Zeile, die es nicht gab.
@@ -352,7 +374,7 @@ public static class Kit
         var pad = align == Align.Center ? 8 : 22;
         if (line is null)
         {
-            box.With(Text(title, pad, (h - fontSize * 1.4) / 2, w - 2 * pad, fontSize * 1.5, fontSize, titleColor, bold: true, align: align));
+            box.With(Text(title, pad, CapTop(h / 2, fontSize), w - 2 * pad, fontSize * 1.5, fontSize, titleColor, bold: true, align: align));
         }
         else
         {
@@ -365,8 +387,11 @@ public static class Kit
             var twoLines = TextWidth(text, subSize) > room && h >= fontSize * 1.4 + 50;
             if (twoLines) subSize = 15;
             var subHeight = twoLines ? 46 : 24;
-            // Titel und Unterzeile als ein Block, senkrecht in der Schaltfläche zentriert
-            var top = Math.Max(4, (h - fontSize * 1.4 - subHeight) / 2);
+            // Titel und Unterzeile als ein Block, senkrecht in der Schaltfläche zentriert: von der Oberkante der
+            // Großbuchstaben im Titel bis zur Grundlinie der letzten Unterzeile
+            var (ascent, cap) = SansMetrics;
+            var glyphs = fontSize * 1.4 - (ascent - cap) * fontSize + ascent * subSize + (twoLines ? subHeight - subSize * 1.4 : 0);
+            var top = Math.Max(4, (h - glyphs) / 2 - (ascent - cap) * fontSize);
             box.With(
                 Text(title, pad, top, w - 2 * pad, fontSize * 1.5, fontSize, titleColor, bold: true, align: align),
                 Text(text, pad, top + fontSize * 1.4, w - 2 * pad, subHeight, subSize, subColor, align: align, maxLines: twoLines ? 2 : 1));
@@ -397,9 +422,9 @@ public static class Kit
     {
         var layer = Layer(x, y, w, 36);
         var color = dark ? Theme.CreamSoft : Theme.InkSoft;
-        layer.With(Text($"{noun} {page + 1} von {Math.Max(1, pageCount)}", 0, 7, w - 90, 24, 16, color));
-        layer.With(IconButton("‹", w - 80, 0, 36, () => setPage(page - 1), dark, page > 0, "Zurückblättern"));
-        layer.With(IconButton("›", w - 38, 0, 36, () => setPage(page + 1), dark, page < pageCount - 1, "Weiterblättern"));
+        layer.With(Text(Lang.En ? $"{(noun == "Seite" ? "Page" : noun)} {page + 1} of {Math.Max(1, pageCount)}" : $"{noun} {page + 1} von {Math.Max(1, pageCount)}", 0, 7, w - 90, 24, 16, color));
+        layer.With(IconButton("‹", w - 80, 0, 36, () => setPage(page - 1), dark, page > 0, Lang.T("Zurückblättern", "Previous page")));
+        layer.With(IconButton("›", w - 38, 0, 36, () => setPage(page + 1), dark, page < pageCount - 1, Lang.T("Weiterblättern", "Next page")));
         return layer;
     }
 
@@ -416,7 +441,7 @@ public static class Kit
             var tab = on
                 ? Box(left, 4, width, 46, radius: 23, gradient: Vertical(Theme.Gold, Theme.GoldDark))
                 : Box(left, 4, width, 46, Theme.GlassLight, 23);
-            tab.With(Text(labels[i], 0, 10, width, 28, 20, on ? Theme.Ink : Theme.Cream, bold: true, align: Align.Center));
+            tab.With(Centered(labels[i], 0, width, 46, 20, on ? Theme.Ink : Theme.Cream, bold: true));
             tab.Tap(() => select(index));
             layer.With(tab);
             if (badges is not null && badges[i] > 0) layer.With(Badge(badges[i], left + width - 6, 8, 12));
@@ -447,7 +472,7 @@ public static class Kit
         }
         layer.With(Box(Math.Clamp(w * share - 17, 0, w - 34), -3, 34, 34, Theme.Wine, 17, Theme.Paper, 4));
         layer.With(Text(caption, 0, 42, w - 230, 26, 18, Theme.InkSoft));
-        string[] names = ["¼", "½", "alles"];
+        string[] names = ["¼", "½", Lang.T("alles", "all")];
         double[] values = [0.25, 0.5, 1];
         for (var i = 0; i < 3; i++)
         {

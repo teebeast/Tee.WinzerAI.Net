@@ -4,8 +4,12 @@ using Winzer.Engine.Data;
 namespace Winzer.Engine;
 
 public sealed record ChallengeScenario(
-    string Id, string Icon, string Name, string Description,
-    int Years, int Opponents, bool ClimateChange, StartSetup? Start = null);
+    string Id, string Icon, string NameDe, string NameEn, string DescriptionDe, string DescriptionEn,
+    int Years, int Opponents, bool ClimateChange, StartSetup? Start = null)
+{
+    public string Name => Lang.T(NameDe, NameEn);
+    public string Description => Lang.T(DescriptionDe, DescriptionEn);
+}
 
 public sealed record DailyChallenge(string Date, ChallengeScenario Scenario, NewGameOptions Options);
 
@@ -15,29 +19,37 @@ public static class Challenge
     /// <summary>Täglich wechselnde Ausgangslagen – sie gelten für alle Weingüter der Partie, auch für die Gegner.</summary>
     public static readonly ChallengeScenario[] ChallengeScenarios =
     [
-        new("klassiker", "🍷", "Klassisches Duell",
+        new("klassiker", "🍷", "Klassisches Duell", "Classic duel",
             "Ganz normaler Start gegen zwei Computer-Winzer. Wer holt in zehn Jahren die meisten Punkte?",
+            "A perfectly normal start against two AI rivals. Who scores the most points in ten years?",
             10, 2, true),
-        new("schuldenberg", "💸", "Schuldenberg",
+        new("schuldenberg", "💸", "Schuldenberg", "Mountain of debt",
             "Der Hof ist mit 60.000 € Kredit belastet, auf dem Konto liegen nur 30.000 €. Erst konsolidieren, dann glänzen.",
+            "The estate carries a €60,000 loan and only €30,000 is in the bank. Consolidate first, then shine.",
             10, 2, true, new StartSetup { Money = 30_000, Loan = 60_000 }),
-        new("erbe", "📜", "Das große Erbe",
+        new("erbe", "📜", "Das große Erbe", "The big inheritance",
             "Alle zehn Hektar tragen alte Reben – aber das Erbe hat die Kasse geleert: nur 40.000 € Startkapital.",
+            "All ten hectares carry old vines – but the inheritance emptied the coffers: only €40,000 starting capital.",
             8, 2, true, new StartSetup { Money = 40_000, Plots = StartPlots.Planted }),
-        new("brache", "🌱", "Neuanfang auf der Brache",
+        new("brache", "🌱", "Neuanfang auf der Brache", "Fresh start on fallow land",
             "Kein einziger Rebstock, dafür 160.000 € Kapital. Was pflanzt du – und wie überbrückst du die Jahre ohne Ernte?",
+            "Not a single vine, but €160,000 in capital. What do you plant – and how do you bridge the years without a harvest?",
             12, 2, true, new StartSetup { Money = 160_000, Plots = StartPlots.Fallow }),
-        new("sprint", "⚡", "Fünf-Jahres-Sprint",
+        new("sprint", "⚡", "Fünf-Jahres-Sprint", "Five-year sprint",
             "Nur fünf Jahre Zeit gegen drei Gegner. Jede Lese zählt.",
+            "Only five years against three rivals. Every harvest counts.",
             5, 3, true),
-        new("name", "⭐", "Bekannter Name",
+        new("name", "⭐", "Bekannter Name", "A known name",
             "Dein Weingut ist schon bekannt (Bekanntheit 35), aber der Keller fasst nur 150 hl.",
+            "Your estate is already known (reputation 35), but the cellar holds only 150 hl.",
             10, 2, true, new StartSetup { Reputation = 35, TankHl = 150 }),
-        new("kaltzeit", "❄️", "Wie in alten Zeiten",
+        new("kaltzeit", "❄️", "Wie in alten Zeiten", "Like the old days",
             "Ohne Klimawandel: kühlere Jahrgänge, später reif – aber gute Chancen auf Eiswein.",
+            "No climate change: cooler vintages, later ripening – but good chances for Eiswein.",
             10, 2, false),
-        new("marathon", "🏃", "Marathon",
+        new("marathon", "🏃", "Marathon", "Marathon",
             "Fünfzehn Jahre gegen drei Gegner. Hier gewinnt, wer langfristig investiert.",
+            "Fifteen years against three rivals. The winner is whoever invests for the long term.",
             15, 3, true),
     ];
 
@@ -64,8 +76,9 @@ public static class Challenge
     /// Tages-Challenge: Alle spielen am selben Tag dieselbe Partie – gleiches Szenario, Gebiet, Wetter und dieselben
     /// Gegner. Gewertet werden die Punkte am Ende der vorgegebenen Jahre.
     /// </summary>
-    public static DailyChallenge DailyChallenge(string date, string playerName = "Du")
+    public static DailyChallenge DailyChallenge(string date, string? playerName = null)
     {
+        playerName ??= Lang.T("Du", "You");
         var seed = Rng.SeedFromString($"winzer-{date}");
         // Eigener Zufall für die Aufstellung, damit Wetter und Ereignisse allein am Seed hängen
         var setup = new Rng { State = Rng.SeedFromString($"winzer-setup-{date}") };

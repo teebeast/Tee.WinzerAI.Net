@@ -48,7 +48,7 @@ public static class Shell
         else if (session.Nav.Overlay == Overlay.Menu) frame.With(Overlays.Menu(session, app));
 
         if (session.Error.Length > 0) frame.With(Overlays.Toast(session.Error, session.ClearError));
-        else if (session.SaveFailed) frame.With(Overlays.Toast("Der Spielstand konnte nicht gesichert werden.", () => { }));
+        else if (session.SaveFailed) frame.With(Overlays.Toast(Lang.T("Der Spielstand konnte nicht gesichert werden.", "The saved game could not be written."), () => { }));
         return frame;
     }
 
@@ -71,7 +71,7 @@ public static class Shell
     }
 
     public static string ReputationWord(double reputation) =>
-        reputation >= 60 ? "gefragt" : reputation >= 30 ? "bekannt" : "Geheimtipp";
+        reputation >= 60 ? Lang.T("gefragt", "in demand") : reputation >= 30 ? Lang.T("bekannt", "known") : Lang.T("Geheimtipp", "insider tip");
 
     static SkiaControl Hud(GameSession session, AppHost app)
     {
@@ -86,12 +86,12 @@ public static class Shell
             Draw.Ring(c, 40, 40, 32, 10, state.Month / 12.0, Theme.SkCream.WithAlpha(60), Theme.SkGold);
         }));
         bar.With(Kit.Text(state.Month.ToString(), 22, 31, 80, 30, 22, Theme.Cream, bold: true, serif: true, align: Align.Center));
-        var date = $"{RulesV2.TurnName(state)} · Jahr {state.Year}{(state.YearLimit is > 0 ? $" von {state.YearLimit}" : "")}";
+        var date = Lang.En ? $"{RulesV2.TurnName(state)} · Year {state.Year}{(state.YearLimit is > 0 ? $" of {state.YearLimit}" : "")}" : $"{RulesV2.TurnName(state)} · Jahr {state.Year}{(state.YearLimit is > 0 ? $" von {state.YearLimit}" : "")}";
         bar.With(Kit.Text(date, 112, 10, 440, 40, date.Length > 24 ? 24 : 30, Theme.Cream, bold: true, serif: true));
         var sub = $"{player.Name} · {region.Name}";
-        if (state.Challenge is not null) sub += $" · Tages-Challenge {state.Challenge}";
-        if (Rules.IsEndless(state)) sub += " · Endlosspiel";
-        foreach (var other in state.Players.Where(p => p.Ai is null && p.AutoSkip is not null && p.Id != player.Id)) sub += $" · {other.Name} spult vor";
+        if (state.Challenge is not null) sub += Lang.En ? $" · Daily Challenge {state.Challenge}" : $" · Tages-Challenge {state.Challenge}";
+        if (Rules.IsEndless(state)) sub += Lang.T(" · Endlosspiel", " · Endless game");
+        foreach (var other in state.Players.Where(p => p.Ai is null && p.AutoSkip is not null && p.Id != player.Id)) sub += Lang.En ? $" · {other.Name} is fast-forwarding" : $" · {other.Name} spult vor";
         bar.With(Kit.Text(sub, 112, 52, 440, 28, 19, Theme.CreamSoft));
 
         // Konto, Punkte, Bekanntheit
@@ -103,7 +103,7 @@ public static class Shell
             Draw.Path(c, "M21 9.5 a7 7 0 1 0 0 11 M8 13 h9 M8 17 h9", ink);
         }, Util.FormatEuro(player.Money), null, player.Money < 0 ? Theme.C("#ff9b8a") : Theme.Cream,
             label => Count(label, $"{player.Id}:konto", player.Money, Util.FormatEuro))
-            .Tap(() => session.Nav.Go(Scene.Kontor)).Tip("Kontostand – zum Kontor"));
+            .Tap(() => session.Nav.Go(Scene.Kontor)).Tip(Lang.T("Kontostand – zum Kontor", "Balance – go to the office")));
 
         var hasTarget = Rules.HasPointTarget(state);
         var goal = hasTarget ? $" / {Util.FormatNumber(state.TargetPoints)}" : "";
@@ -112,7 +112,7 @@ public static class Shell
         {
             using var gold = Draw.VerticalGradient(0, h, (0, "#f6d477"), (1, "#c8962e"));
             Draw.Path(c, "M5 4 h20 v8 a10 10 0 0 1 -20 0 Z M12 22 h6 v5 h-6 Z M8 27 h14 v3 h-14 Z", gold);
-        }, points, null, Theme.Cream, label => Count(label, $"{player.Id}:punkte", player.Points, v => Util.FormatNumber(v) + goal)).Tap(() => session.Nav.Go(Scene.Dorf)).Tip("Punkte – zur Rangliste im Dorf");
+        }, points, null, Theme.Cream, label => Count(label, $"{player.Id}:punkte", player.Points, v => Util.FormatNumber(v) + goal)).Tap(() => session.Nav.Go(Scene.Dorf)).Tip(Lang.T("Punkte – zur Rangliste im Dorf", "Points – to the standings in the village"));
         if (hasTarget)
         {
             pointsPill.With(Kit.Box(56, 42, 150, 4, Theme.GlassLine, 2));
@@ -160,9 +160,9 @@ public static class Shell
                     c.DrawCircle(16, 16, 5, p);
                     c.DrawLine(16, 0, 16, 6, p);
                 }))
-                .Tap(() => session.Nav.Show(Overlay.Plan)).Tip("Gutsplanung: Ziele, Ausbau, Preise"));
+                .Tap(() => session.Nav.Show(Overlay.Plan)).Tip(Lang.T("Gutsplanung: Ziele, Ausbau, Preise", "Estate planning: goals, upgrades, prices")));
         }
-        bar.With(Kit.IconButton("?", helpX, 22, 48, () => session.Nav.Show(Overlay.Lexicon), tip: "Lexikon und Hilfe"));
+        bar.With(Kit.IconButton("?", helpX, 22, 48, () => session.Nav.Show(Overlay.Lexicon), tip: Lang.T("Lexikon und Hilfe", "Lexicon and help")));
         var muted = app.Audio.Muted;
         bar.With(Kit.Box(soundX, 22, 48, 48, Theme.GlassLight, 12)
             .With(Kit.Paint(8, 8, 32, 32, (c, w, h) =>
@@ -192,13 +192,13 @@ public static class Shell
                 app.Audio.Muted = !app.Audio.Muted;
                 app.Store.SetSetting("muted", app.Audio.Muted ? "1" : "0");
                 session.Nav.Notify();
-            }).Tip(muted ? "Ton einschalten" : "Ton ausschalten"));
-        bar.With(Kit.IconButton("≡", menuX, 22, 48, () => session.Nav.Show(Overlay.Menu), tip: "Menü"));
+            }).Tip(muted ? Lang.T("Ton einschalten", "Sound on") : Lang.T("Ton ausschalten", "Sound off")));
+        bar.With(Kit.IconButton("≡", menuX, 22, 48, () => session.Nav.Show(Overlay.Menu), tip: Lang.T("Menü", "Menu")));
         if (player.Decision is not null && !session.Over)
         {
             bar.With(Kit.Box(decisionX, 22, 44, 48, radius: 12, gradient: Kit.Vertical(Theme.Gold, Theme.GoldDark))
                 .With(Kit.Text("!", 0, 6, 44, 36, 26, Theme.Ink, bold: true, align: Align.Center))
-                .Tap(() => session.Nav.Show(Overlay.Decision)).Tip("Offene Entscheidung"));
+                .Tap(() => session.Nav.Show(Overlay.Decision)).Tip(Lang.T("Offene Entscheidung", "Open decision")));
         }
         return bar;
     }
@@ -297,8 +297,8 @@ public static class Shell
         {
             // Partie vorbei: Von jeder Szene aus zurück ins Menü
             rail.With(Kit.Box(16, 894, 80, 80, radius: 18, gradient: Kit.Vertical(Theme.Gold, Theme.GoldDark))
-                .With(Kit.Text("Ende", 0, 16, 80, 26, 19, Theme.Ink, bold: true, align: Align.Center))
-                .With(Kit.Text("Menü ›", 0, 44, 80, 22, 15, Theme.Ink, align: Align.Center))
+                .With(Kit.Text(Lang.T("Ende", "End"), 0, 16, 80, 26, 19, Theme.Ink, bold: true, align: Align.Center))
+                .With(Kit.Text(Lang.T("Menü ›", "Menu ›"), 0, 44, 80, 22, 15, Theme.Ink, align: Align.Center))
                 .Tap(() => session.Nav.Show(Overlay.Menu)));
         }
         // Zug beenden von jeder Szene aus
@@ -310,14 +310,14 @@ public static class Shell
                     using var p = Draw.Fill(Theme.SkCream);
                     Draw.Path(c, "M2 4 l14 12 -14 12 Z M18 4 l14 12 -14 12 Z", p);
                 }))
-                .Tap(() => session.Run(new GameAction.AutoSkipTurn())).Tip("Vorspulen"));
+                .Tap(() => session.Run(new GameAction.AutoSkipTurn())).Tip(Lang.T("Vorspulen", "Fast-forward")));
             rail.With(Kit.Box(16, 894, 80, 80, radius: 18, gradient: Kit.Vertical(Theme.Wine, Theme.WineDark), stroke: Theme.Gold, strokeWidth: 2.5)
                 .With(Kit.Paint(24, 14, 32, 32, (c, w, h) =>
                 {
                     using var p = Draw.Fill(SKColor.Parse("#fff6e6"));
                     Draw.Path(c, "M6 3 l20 13 -20 13 Z", p);
                 }))
-                .With(Kit.Text(session.HotSeat || RulesV2.On(session.State) ? "Zug" : "Monat", 0, 50, 80, 22, 15, Theme.C("#f0cfd6"), align: Align.Center))
+                .With(Kit.Text(session.HotSeat || RulesV2.On(session.State) ? Lang.T("Zug", "Turn") : Lang.T("Monat", "Month"), 0, 50, 80, 22, 15, Theme.C("#f0cfd6"), align: Align.Center))
                 .Tap(() => session.Run(new GameAction.EndTurn())));
         }
         return rail;
@@ -361,13 +361,13 @@ public static class Shell
     static SkiaControl GameOverBanner(GameSession session, AppHost app)
     {
         var state = session.State;
-        var text = state.Challenge is not null && state.Finished ? $"Tages-Challenge beendet. {session.ChallengeMessage}"
-            : session.Winner is { } winner ? $"{winner.Name} hat gewonnen!"
-            : state.Finished ? "Alle Weingüter sind insolvent – Spiel vorbei."
-            : "Du bist insolvent und scheidest aus.";
+        var text = state.Challenge is not null && state.Finished ? Lang.En ? $"Daily Challenge over. {session.ChallengeMessage}" : $"Tages-Challenge beendet. {session.ChallengeMessage}"
+            : session.Winner is { } winner ? (Lang.En ? $"{winner.Name} has won!" : $"{winner.Name} hat gewonnen!")
+            : state.Finished ? Lang.T("Alle Weingüter sind insolvent – Spiel vorbei.", "All estates are insolvent – game over.")
+            : Lang.T("Du bist insolvent und scheidest aus.", "You are insolvent and drop out.");
         var banner = Kit.Card(460, 104, 1000, 84);
         banner.With(Kit.Text(text, 28, 24, 700, 36, 26, Theme.Ink, bold: true, serif: true));
-        banner.With(Kit.Button("Neues Spiel", 760, 14, 216, 56, () => app.ShowMenu(), ButtonKind.Primary, align: Align.Center));
+        banner.With(Kit.Button(Lang.T("Neues Spiel", "New Game"), 760, 14, 216, 56, () => app.ShowMenu(), ButtonKind.Primary, align: Align.Center));
         return banner;
     }
 }

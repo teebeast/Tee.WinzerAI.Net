@@ -37,8 +37,8 @@ internal static class CellarBottles
         var competition = Market.UpcomingCompetition(state.Month);
         var total = lots.Sum(l => l.Bottles);
 
-        scene.With(Kit.Text($"Flaschenlager: {Util.FormatNumber(total)} Fl. in {lots.Count} Posten", 830, 18, 400, 26, 18, Theme.Cream, bold: true, align: Align.End));
-        scene.With(Kit.Text($"{competition.Name}: {Game.MonthNames[competition.Month - 1]} ({player.CompetitionEntries.Count}/{competition.MaxEntries} angemeldet)",
+        scene.With(Kit.Text(Lang.En ? $"Bottle stock: {Util.FormatNumber(total)} btl. in {lots.Count} lots" : $"Flaschenlager: {Util.FormatNumber(total)} Fl. in {lots.Count} Posten", 830, 18, 400, 26, 18, Theme.Cream, bold: true, align: Align.End));
+        scene.With(Kit.Text(Lang.En ? $"{competition.Name}: {Game.MonthNames[competition.Month - 1]} ({player.CompetitionEntries.Count}/{competition.MaxEntries} entered)" : $"{competition.Name}: {Game.MonthNames[competition.Month - 1]} ({player.CompetitionEntries.Count}/{competition.MaxEntries} angemeldet)",
             830, 46, 400, 24, 16, Theme.CreamSoft, align: Align.End));
 
         var pages = Math.Max(1, (int)Math.Ceiling(lots.Count / (double)PerPage));
@@ -55,16 +55,16 @@ internal static class CellarBottles
         if (lots.Count == 0)
         {
             var note = Kit.Glass(316, 400, 626, 150);
-            note.With(Kit.Text("Noch nichts abgefüllt", 0, 22, 626, 40, 28, Theme.Gold, bold: true, serif: true, align: Align.Center));
-            note.With(Kit.Text("Ausgebauten Wein aus dem Tank abfüllen.", 0, 66, 626, 28, 19, Theme.Cream, align: Align.Center));
-            note.With(Kit.Button("Zu den Tanks ›", 213, 100, 200, 40, () => nav.SetTab(0), ButtonKind.Dark, fontSize: 17, align: Align.Center));
+            note.With(Kit.Text(Lang.T("Noch nichts abgefüllt", "Nothing bottled yet"), 0, 22, 626, 40, 28, Theme.Gold, bold: true, serif: true, align: Align.Center));
+            note.With(Kit.Text(Lang.T("Ausgebauten Wein aus dem Tank abfüllen.", "Bottle the matured wine from the tank."), 0, 66, 626, 28, 19, Theme.Cream, align: Align.Center));
+            note.With(Kit.Button(Lang.T("Zu den Tanks ›", "To the tanks ›"), 213, 100, 200, 40, () => nav.SetTab(0), ButtonKind.Dark, fontSize: 17, align: Align.Center));
             scene.With(note);
         }
         else
         {
             var saturation = Market.WholesaleSaturation(player);
             scene.With(Kit.Text(saturation < 1
-                ? $"Großhandel gesättigt: In diesem Jahr gibt es nur noch {Js.Round(saturation * 100)} % des üblichen Preises."
+                ? (Lang.En ? $"Wholesale saturated: this year only {Js.Round(saturation * 100)} % of the usual price is paid." : $"Großhandel gesättigt: In diesem Jahr gibt es nur noch {Js.Round(saturation * 100)} % des üblichen Preises.")
                 : CellarParts.DemandText(player), 40, 930, 860, 26, 17, saturation < 1 ? Theme.Warn : Theme.CreamSoft));
             if (pages > 1) scene.With(Kit.Pager(930, 924, 300, page, pages, p => nav.SetPage("keller.lots", p)));
         }
@@ -74,20 +74,20 @@ internal static class CellarBottles
 
     static (string Text, Color Color) Status(BottleLot lot)
     {
-        if (lot.MonthsUntilReady > 0) return ($"reift noch {CellarParts.Months(lot.MonthsUntilReady)} auf der Hefe", Theme.InkSoft);
-        if (lot.Registered) return ("amtlich geprüft", Theme.Good);
-        if (!lot.Sparkling && lot.Level == QualityLevel.DeutscherWein) return ("Deutscher Wein – ohne Prüfung", Theme.InkSoft);
-        if (lot.Bottles >= Economy.RegisterMinBottles) return ("wartet auf die Prüfung", Theme.Alert);
-        return ("Restposten – ohne Prüfung", Theme.InkSoft);
+        if (lot.MonthsUntilReady > 0) return (Lang.En ? $"ages {CellarParts.Months(lot.MonthsUntilReady)} more on the lees" : $"reift noch {CellarParts.Months(lot.MonthsUntilReady)} auf der Hefe", Theme.InkSoft);
+        if (lot.Registered) return (Lang.T("amtlich geprüft", "officially inspected"), Theme.Good);
+        if (!lot.Sparkling && lot.Level == QualityLevel.DeutscherWein) return (Lang.T("Deutscher Wein – ohne Prüfung", "Deutscher Wein – no inspection"), Theme.InkSoft);
+        if (lot.Bottles >= Economy.RegisterMinBottles) return (Lang.T("wartet auf die Prüfung", "awaiting inspection"), Theme.Alert);
+        return (Lang.T("Restposten – ohne Prüfung", "Remainder – no inspection"), Theme.InkSoft);
     }
 
     static (string Text, Color Color) ShortStatus(BottleLot lot)
     {
-        if (lot.MonthsUntilReady > 0) return ($"reift {lot.MonthsUntilReady} Mon.", Theme.InkSoft);
-        if (lot.Registered) return ("geprüft", Theme.Good);
+        if (lot.MonthsUntilReady > 0) return (Lang.En ? $"ages {lot.MonthsUntilReady} mo." : $"reift {lot.MonthsUntilReady} Mon.", Theme.InkSoft);
+        if (lot.Registered) return (Lang.T("geprüft", "inspected"), Theme.Good);
         if (!lot.Sparkling && lot.Level == QualityLevel.DeutscherWein) return ("", Theme.InkSoft);
-        if (lot.Bottles >= Economy.RegisterMinBottles) return ("ungeprüft", Theme.Alert);
-        return ("Rest", Theme.InkSoft);
+        if (lot.Bottles >= Economy.RegisterMinBottles) return (Lang.T("ungeprüft", "uninspected"), Theme.Alert);
+        return (Lang.T("Rest", "Rest"), Theme.InkSoft);
     }
 
     /// <summary>Ein Platz im Regal: Flasche mit Medaillen, darunter das Schild am Regalbrett</summary>
@@ -101,10 +101,10 @@ internal static class CellarBottles
             ? Kit.Box(0, 312, 190, 96, radius: 10, gradient: Kit.Vertical(Theme.Paper, Theme.PaperDark), stroke: Theme.Gold, strokeWidth: 4, shadow: true)
             : Kit.Box(0, 312, 190, 96, radius: 10, gradient: Kit.Vertical(Theme.Paper, Theme.PaperDark), shadow: true);
         tag.With(Kit.Text(CellarParts.GrapeName(lot) + (lot.Adulterated is not null ? " 🧪" : ""), 10, 8, 170, 26, 18, Theme.Ink, bold: true, align: Align.Center));
-        var kind = lot.Sparkling ? "Sekt" : Quality.QualityInfo(lot.Level).Name;
-        tag.With(Kit.Text($"{(lot.Rose ? "Rosé " : "")}{kind} · Jg. {lot.Vintage}", 8, 36, 174, 24, 15, Theme.InkSoft, align: Align.Center));
+        var kind = lot.Sparkling ? Lang.T("Sekt", "Sparkling") : Quality.QualityInfo(lot.Level).Name;
+        tag.With(Kit.Text($"{(lot.Rose ? "Rosé " : "")}{kind} · {Lang.T("Jg.", "Vint.")} {lot.Vintage}", 8, 36, 174, 24, 15, Theme.InkSoft, align: Align.Center));
         var status = ShortStatus(lot);
-        tag.With(Kit.Text($"{Util.FormatNumber(lot.Bottles)} Fl.", 12, 64, 100, 24, 15, Theme.Ink, bold: true));
+        tag.With(Kit.Text($"{Util.FormatNumber(lot.Bottles)} {Lang.T("Fl.", "btl.")}", 12, 64, 100, 24, 15, Theme.Ink, bold: true));
         tag.With(Kit.Text(status.Text, 90, 64, 90, 24, 15, status.Color, bold: true, align: Align.End));
         cell.With(tag);
         var id = lot.Id;
@@ -119,8 +119,8 @@ internal static class CellarBottles
         var nav = session.Nav;
         var card = CellarParts.Inspector();
         var (name, vintage) = CellarParts.NameOf(lot);
-        if (lot.Adulterated is { } method) CellarParts.Head(card, name, $"Jg. {lot.Vintage} · gepanscht: {Economy.Adulteration[method].Name}", Theme.Alert);
-        else CellarParts.Head(card, name, $"{vintage} · {(lot.Sparkling ? "Flaschengärung" : "abgefüllt")}");
+        if (lot.Adulterated is { } method) CellarParts.Head(card, name, Lang.En ? $"Vintage {lot.Vintage} · adulterated: {Economy.Adulteration[method].Name}" : $"Jg. {lot.Vintage} · gepanscht: {Economy.Adulteration[method].Name}", Theme.Alert);
+        else CellarParts.Head(card, name, $"{vintage} · {(lot.Sparkling ? Lang.T("Flaschengärung", "bottle fermentation") : Lang.T("abgefüllt", "bottled"))}");
 
         card.With(CellarParts.QualityRing(CellarParts.Pad, 108, lot.Quality));
         // Erweiterte Regeln: eigener Preisaufschlag ab Hof
@@ -128,27 +128,27 @@ internal static class CellarBottles
         var wholesale = Market.WholesalePrice(lot, player, state);
         var trend = CellarParts.TrendValue(CellarParts.TrendOf(state, lot));
         const double rx = 186, rw = 306;
-        card.With(Kit.Row("Flaschen", $"{Util.FormatNumber(lot.Bottles)} Fl.", rx, 108, rw, size: 18));
-        card.With(Kit.Row("Preis ab Hof", $"{CellarParts.Cents(price)}/Fl.", rx, 142, rw, size: 18));
-        card.With(Kit.Row("Großhandel", $"{CellarParts.Cents(wholesale)}/Fl.", rx, 176, rw, size: 18));
-        card.With(Kit.Row("Markttrend", trend.Text, rx, 210, rw, trend.Color, 18));
-        card.With(Kit.Row("Mostgewicht", $"{Util.FormatNumber(lot.Oechsle)} °Oe", rx, 244, rw, size: 18));
-        card.With(Kit.Row("Wert ab Hof", $"≈ {Util.FormatEuro(price * lot.Bottles)}", rx, 278, rw, size: 18));
+        card.With(Kit.Row(Lang.T("Flaschen", "Bottles"), $"{Util.FormatNumber(lot.Bottles)} {Lang.T("Fl.", "btl.")}", rx, 108, rw, size: 18));
+        card.With(Kit.Row(Lang.T("Preis ab Hof", "Cellar-door price"), $"{CellarParts.Cents(price)}/{Lang.T("Fl.", "btl.")}", rx, 142, rw, size: 18));
+        card.With(Kit.Row(Lang.T("Großhandel", "Wholesale"), $"{CellarParts.Cents(wholesale)}/{Lang.T("Fl.", "btl.")}", rx, 176, rw, size: 18));
+        card.With(Kit.Row(Lang.T("Markttrend", "Market trend"), trend.Text, rx, 210, rw, trend.Color, 18));
+        card.With(Kit.Row(Lang.T("Mostgewicht", "Must weight"), $"{Util.FormatNumber(lot.Oechsle)} °Oe", rx, 244, rw, size: 18));
+        card.With(Kit.Row(Lang.T("Wert ab Hof", "Cellar-door value"), $"≈ {Util.FormatEuro(price * lot.Bottles)}", rx, 278, rw, size: 18));
         card.With(CellarParts.Divider(322));
 
         // Prüfung und Anmeldung
         var status = Status(lot);
         var entered = player.CompetitionEntries.Contains(lot.Id);
-        card.With(Kit.Text("Amtliche Prüfung", CellarParts.Pad, 334, 200, 28, 19, Theme.InkSoft));
+        card.With(Kit.Text(Lang.T("Amtliche Prüfung", "Official inspection"), CellarParts.Pad, 334, 200, 28, 19, Theme.InkSoft));
         card.With(Kit.Text(status.Text, 190, 334, 302, 28, 19, status.Color, bold: true, align: Align.End));
-        card.With(Kit.Text("Prämierung", CellarParts.Pad, 368, 200, 28, 19, Theme.InkSoft));
-        card.With(Kit.Text(entered ? $"angemeldet: {competition.Name}" : "nicht angemeldet", 150, 368, 342, 28, 19, entered ? Theme.Good : Theme.Ink, bold: true, align: Align.End));
+        card.With(Kit.Text(Lang.T("Prämierung", "Wine award"), CellarParts.Pad, 368, 200, 28, 19, Theme.InkSoft));
+        card.With(Kit.Text(entered ? (Lang.En ? $"entered: {competition.Name}" : $"angemeldet: {competition.Name}") : Lang.T("nicht angemeldet", "not entered"), 150, 368, 342, 28, 19, entered ? Theme.Good : Theme.Ink, bold: true, align: Align.End));
 
         // Auszeichnungen
-        card.With(Kit.Text("Auszeichnungen", CellarParts.Pad, 408, 300, 28, 19, Theme.Wine, bold: true));
+        card.With(Kit.Text(Lang.T("Auszeichnungen", "Awards"), CellarParts.Pad, 408, 300, 28, 19, Theme.Wine, bold: true));
         if (lot.Awards.Count == 0)
         {
-            card.With(Kit.Text("Noch keine Medaille – geprüfte Weine dürfen zur Prämierung.", CellarParts.Pad, 438, CellarParts.Inner, 26, 17, Theme.InkSoft));
+            card.With(Kit.Text(Lang.T("Noch keine Medaille – geprüfte Weine dürfen zur Prämierung.", "No medal yet – inspected wines may enter the wine award."), CellarParts.Pad, 438, CellarParts.Inner, 26, 17, Theme.InkSoft));
         }
         var ay = 438.0;
         var visible = lot.Awards.Count > 3 ? 2 : lot.Awards.Count;
@@ -156,7 +156,7 @@ internal static class CellarBottles
         {
             var medal = award.Medal;
             card.With(Kit.Paint(CellarParts.Pad, ay, 30, 30, (c, w, h) => CellarParts.PaintMedal(c, 15, 11, 10, medal)));
-            card.With(Kit.Text($"{Economy.MedalNames[award.Medal]} · {Economy.Competitions[award.Competition].Name} · Jahr {award.Year}", CellarParts.Pad + 38, ay + 1, CellarParts.Inner - 38, 26, 17, Theme.Ink));
+            card.With(Kit.Text(Lang.En ? $"{Economy.MedalNames[award.Medal]} · {Economy.Competitions[award.Competition].Name} · year {award.Year}" : $"{Economy.MedalNames[award.Medal]} · {Economy.Competitions[award.Competition].Name} · Jahr {award.Year}", CellarParts.Pad + 38, ay + 1, CellarParts.Inner - 38, 26, 17, Theme.Ink));
             ay += 30;
         }
         if (lot.Awards.Count > visible)
@@ -166,27 +166,27 @@ internal static class CellarBottles
             {
                 for (var i = 0; i < Math.Min(rest.Count, 6); i++) CellarParts.PaintMedal(c, 15 + i * 30, 11, 10, rest[i].Medal);
             }));
-            card.With(Kit.Text($"und {rest.Count} weitere", CellarParts.Pad + 30 * Math.Min(rest.Count, 6) + 10, ay + 1, 200, 26, 17, Theme.InkSoft));
+            card.With(Kit.Text(Lang.En ? $"and {rest.Count} more" : $"und {rest.Count} weitere", CellarParts.Pad + 30 * Math.Min(rest.Count, 6) + 10, ay + 1, 200, 26, 17, Theme.InkSoft));
         }
 
         const double top = 544;
         var register = new GameAction.Register(lot.Id);
-        card.With(CellarParts.Action("Prüfen lassen", CellarParts.Pad, top, CellarParts.Inner, 84, () => session.Run(register), ButtonKind.Primary,
-            $"amtliche Prüfung · kostet {Util.FormatEuro(Economy.RegisterFee)} · +{Util.FormatNumber(Market.RegistrationPoints(lot))} Punkte", session.Problem(register)));
-        card.With(Kit.Button("Großhandel ›", CellarParts.Pad, top + 96, CellarParts.Inner, 84, () => nav.Go(Scene.Markt, 1), ButtonKind.Secondary,
+        card.With(CellarParts.Action(Lang.T("Prüfen lassen", "Get inspected"), CellarParts.Pad, top, CellarParts.Inner, 84, () => session.Run(register), ButtonKind.Primary,
+            Lang.En ? $"official inspection · costs {Util.FormatEuro(Economy.RegisterFee)} · +{Util.FormatNumber(Market.RegistrationPoints(lot))} points" : $"amtliche Prüfung · kostet {Util.FormatEuro(Economy.RegisterFee)} · +{Util.FormatNumber(Market.RegistrationPoints(lot))} Punkte", session.Problem(register)));
+        card.With(Kit.Button(Lang.T("Großhandel ›", "Wholesale ›"), CellarParts.Pad, top + 96, CellarParts.Inner, 84, () => nav.Go(Scene.Markt, 1), ButtonKind.Secondary,
             lot.Registered
-                ? $"Verkauf im Markt · alle Flaschen ≈ +{Util.FormatEuro(wholesale * lot.Bottles)}"
-                : "Verkauf im Markt · nimmt nur geprüften Wein"));
+                ? (Lang.En ? $"Sold at the market · all bottles ≈ +{Util.FormatEuro(wholesale * lot.Bottles)}" : $"Verkauf im Markt · alle Flaschen ≈ +{Util.FormatEuro(wholesale * lot.Bottles)}")
+                : Lang.T("Verkauf im Markt · nimmt nur geprüften Wein", "Sold at the market · takes only inspected wine")));
         var entryProblem = Market.CompetitionEntryProblem(player, lot, competition);
-        card.With(Kit.Button("Prämierung ›", CellarParts.Pad, top + 192, CellarParts.Inner, 84, () => nav.Go(Scene.Markt, 3), ButtonKind.Secondary,
-            entered ? $"angemeldet · {competition.Name} im {Game.MonthNames[competition.Month - 1]}"
-            : entryProblem is null ? $"{competition.Name} im {Game.MonthNames[competition.Month - 1]} · Gebühr {Util.FormatEuro(competition.Fee)}"
-            : $"Anmeldung im Markt · {entryProblem}"));
+        card.With(Kit.Button(Lang.T("Prämierung ›", "Wine award ›"), CellarParts.Pad, top + 192, CellarParts.Inner, 84, () => nav.Go(Scene.Markt, 3), ButtonKind.Secondary,
+            entered ? (Lang.En ? $"entered · {competition.Name} in {Game.MonthNames[competition.Month - 1]}" : $"angemeldet · {competition.Name} im {Game.MonthNames[competition.Month - 1]}")
+            : entryProblem is null ? (Lang.En ? $"{competition.Name} in {Game.MonthNames[competition.Month - 1]} · fee {Util.FormatEuro(competition.Fee)}" : $"{competition.Name} im {Game.MonthNames[competition.Month - 1]} · Gebühr {Util.FormatEuro(competition.Fee)}")
+            : (Lang.En ? $"Entry at the market · {entryProblem}" : $"Anmeldung im Markt · {entryProblem}")));
 
         var saturation = Market.WholesaleSaturation(player);
         var note = saturation < 1
-            ? $"Großhandel gesättigt: In diesem Jahr gibt es nur noch {Js.Round(saturation * 100)} % des üblichen Preises. {CellarParts.DemandText(player)}"
-            : $"{CellarParts.DemandText(player)} Ungeprüfter Wein geht nur als „Deutscher Wein“ über den Tresen.";
+            ? (Lang.En ? $"Wholesale saturated: this year only {Js.Round(saturation * 100)} % of the usual price is paid. {CellarParts.DemandText(player)}" : $"Großhandel gesättigt: In diesem Jahr gibt es nur noch {Js.Round(saturation * 100)} % des üblichen Preises. {CellarParts.DemandText(player)}")
+            : (Lang.En ? $"{CellarParts.DemandText(player)} Uninspected wine can only be sold over the counter as “Deutscher Wein”." : $"{CellarParts.DemandText(player)} Ungeprüfter Wein geht nur als „Deutscher Wein“ über den Tresen.");
         card.With(Kit.Text(note, CellarParts.Pad, 840, CellarParts.Inner, 84, 17, Theme.InkSoft, maxLines: 3));
         return card;
     }
@@ -195,18 +195,18 @@ internal static class CellarBottles
     {
         var player = session.Player;
         var card = CellarParts.Inspector();
-        CellarParts.Head(card, "Flaschenlager", "Noch nichts abgefüllt");
-        card.With(Kit.Text("Abgefüllter Wein wartet hier auf Kundschaft. Geprüfte Weine bringen Punkte und den vollen Preis, die besten gewinnen Medaillen.",
+        CellarParts.Head(card, Lang.T("Flaschenlager", "Bottle stock"), Lang.T("Noch nichts abgefüllt", "Nothing bottled yet"));
+        card.With(Kit.Text(Lang.T("Abgefüllter Wein wartet hier auf Kundschaft. Geprüfte Weine bringen Punkte und den vollen Preis, die besten gewinnen Medaillen.", "Bottled wine waits here for customers. Inspected wines bring points and the full price, the best win medals."),
             CellarParts.Pad, 112, CellarParts.Inner, 110, 19, Theme.Ink, maxLines: 4));
         card.With(CellarParts.Divider(236));
-        card.With(Kit.Row("Prüfgebühr", Util.FormatEuro(Economy.RegisterFee), CellarParts.Pad, 252, CellarParts.Inner));
-        card.With(Kit.Row("Mindestmenge", $"{Util.FormatNumber(Economy.RegisterMinBottles)} Fl. (5 hl)", CellarParts.Pad, 292, CellarParts.Inner));
-        card.With(Kit.Row("Absatz ab Hof", $"≈ {Util.FormatNumber(Live.Demand(player))} Fl./Monat", CellarParts.Pad, 332, CellarParts.Inner));
-        card.With(Kit.Row($"Prämierung im {Game.MonthNames[competition.Month - 1]}", competition.Name, CellarParts.Pad, 372, CellarParts.Inner, size: 18));
-        card.With(Kit.Button("Zu den Tanks ›", CellarParts.Pad, 560, CellarParts.Inner, 84, () => session.Nav.SetTab(0), ButtonKind.Primary, "ausgebauten Wein abfüllen"));
-        card.With(Kit.Button("Großhandel ›", CellarParts.Pad, 656, CellarParts.Inner, 84, () => session.Nav.Go(Scene.Markt, 1), ButtonKind.Secondary, "Verkauf im Markt"));
-        card.With(Kit.Button("Prämierung ›", CellarParts.Pad, 752, CellarParts.Inner, 84, () => session.Nav.Go(Scene.Markt, 3), ButtonKind.Secondary,
-            $"{competition.Name} im {Game.MonthNames[competition.Month - 1]}"));
+        card.With(Kit.Row(Lang.T("Prüfgebühr", "Inspection fee"), Util.FormatEuro(Economy.RegisterFee), CellarParts.Pad, 252, CellarParts.Inner));
+        card.With(Kit.Row(Lang.T("Mindestmenge", "Minimum amount"), $"{Util.FormatNumber(Economy.RegisterMinBottles)} {Lang.T("Fl.", "btl.")} (5 hl)", CellarParts.Pad, 292, CellarParts.Inner));
+        card.With(Kit.Row(Lang.T("Absatz ab Hof", "Cellar-door sales"), $"≈ {Util.FormatNumber(Live.Demand(player))} {Lang.T("Fl./Monat", "btl./month")}", CellarParts.Pad, 332, CellarParts.Inner));
+        card.With(Kit.Row(Lang.En ? $"Wine award in {Game.MonthNames[competition.Month - 1]}" : $"Prämierung im {Game.MonthNames[competition.Month - 1]}", competition.Name, CellarParts.Pad, 372, CellarParts.Inner, size: 18));
+        card.With(Kit.Button(Lang.T("Zu den Tanks ›", "To the tanks ›"), CellarParts.Pad, 560, CellarParts.Inner, 84, () => session.Nav.SetTab(0), ButtonKind.Primary, Lang.T("ausgebauten Wein abfüllen", "bottle matured wine")));
+        card.With(Kit.Button(Lang.T("Großhandel ›", "Wholesale ›"), CellarParts.Pad, 656, CellarParts.Inner, 84, () => session.Nav.Go(Scene.Markt, 1), ButtonKind.Secondary, Lang.T("Verkauf im Markt", "Sold at the market")));
+        card.With(Kit.Button(Lang.T("Prämierung ›", "Wine award ›"), CellarParts.Pad, 752, CellarParts.Inner, 84, () => session.Nav.Go(Scene.Markt, 3), ButtonKind.Secondary,
+            Lang.En ? $"{competition.Name} in {Game.MonthNames[competition.Month - 1]}" : $"{competition.Name} im {Game.MonthNames[competition.Month - 1]}"));
         return card;
     }
 

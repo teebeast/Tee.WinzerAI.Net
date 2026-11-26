@@ -34,7 +34,7 @@ public partial class App
 
         var app = new AppHost(new MemorySaveStore(), new SilentAudio());
         var window = new MainWindow(app, accelerated);
-        window.FillWorkArea();
+        window.ApplyWindowMode(true);
         window.Topmost = true;
         MainWindow = window;
         window.Show();

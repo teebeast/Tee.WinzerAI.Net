@@ -12,11 +12,6 @@ public static class Auction
 {
     public const string Investor = "investor";
 
-    static readonly string[] MonthNames =
-    [
-        "Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember",
-    ];
-
     static readonly string[] ParcelNames =
     [
         "Sonnenberg", "Kirchberg", "Schlossberg", "Herrenberg", "Rosengarten", "Mühlberg", "Steinacker",
@@ -26,13 +21,23 @@ public static class Auction
 
     static readonly double[] Sites = [-1, 0, 0, 1, 1, 2];
 
-    public static readonly Dictionary<double, string> SiteLabels = new()
+    static readonly Dictionary<double, string> SiteLabelsDe = new()
     {
         [-1] = "einfache Lage",
         [0] = "gute Lage",
         [1] = "sehr gute Lage",
         [2] = "Spitzenlage",
     };
+
+    static readonly Dictionary<double, string> SiteLabelsEn = new()
+    {
+        [-1] = "basic site",
+        [0] = "good site",
+        [1] = "very good site",
+        [2] = "prime site",
+    };
+
+    public static Dictionary<double, string> SiteLabels => Lang.En ? SiteLabelsEn : SiteLabelsDe;
 
     /// <summary>Zieht ein Element; bei leerer Liste wird der Zufallsaufruf trotzdem verbraucht (wie im Original, dort <c>undefined</c>).</summary>
     static T? Pick<T>(Rng rng, IReadOnlyList<T> items)
@@ -92,7 +97,7 @@ public static class Auction
         Util.AddLog(
             state,
             null,
-            $"📣 Weinbergversteigerung im {MonthNames[month - 1]}: {lots.Count} Lagen kommen unter den Hammer. Live bieten – wer am meisten zahlt, bekommt den Zuschlag.");
+            (Lang.En ? $"📣 Vineyard auction in {Game.MonthNames[month - 1]}: {lots.Count} sites go under the hammer. Bid live – the highest bidder wins." : $"📣 Weinbergversteigerung im {Game.MonthNames[month - 1]}: {lots.Count} Lagen kommen unter den Hammer. Live bieten – wer am meisten zahlt, bekommt den Zuschlag."));
     }
 
     /// <summary>Ausrufpreis, wenn man diese Parzelle selbst zur Versteigerung gibt</summary>
@@ -187,7 +192,7 @@ public static class Auction
     /// <summary>Name des Bieters; <paramref name="inSentence"/> schreibt die Investoren klein („… an auswärtige Investoren“)</summary>
     public static string BidderName(GameState state, string bidder, bool inSentence = false)
     {
-        if (bidder == Investor) return inSentence ? "auswärtige Investoren" : "Auswärtige Investoren";
+        if (bidder == Investor) return inSentence ? Lang.T("auswärtige Investoren", "outside investors") : Lang.T("Auswärtige Investoren", "Outside investors");
         return state.Players.Find(p => p.Id == bidder)?.Name ?? "?";
     }
 
@@ -208,14 +213,14 @@ public static class Auction
     public static string? ValidateAuctionLimit(GameState state, Player player, string lotId, double amount)
     {
         var lot = FindLot(state, lotId);
-        if (lot is null || lot.Status != LotStatus.Pending) return "Dieser Weinberg wird nicht (mehr) versteigert.";
-        if (player.Ai is null) return "Menschen bieten live bei der Versteigerung mit.";
-        if (lot.RegionId != player.RegionId) return "Der Weinberg liegt nicht in deinem Anbaugebiet.";
-        if (lot.SellerId == player.Id) return "Auf den eigenen Weinberg bietet man nicht.";
-        if (!double.IsInteger(amount) || amount < 0) return "Ungültiger Betrag.";
+        if (lot is null || lot.Status != LotStatus.Pending) return Lang.T("Dieser Weinberg wird nicht (mehr) versteigert.", "This vineyard is no longer up for auction.");
+        if (player.Ai is null) return Lang.T("Menschen bieten live bei der Versteigerung mit.", "Humans bid live at the auction.");
+        if (lot.RegionId != player.RegionId) return Lang.T("Der Weinberg liegt nicht in deinem Anbaugebiet.", "The vineyard is not in your wine region.");
+        if (lot.SellerId == player.Id) return Lang.T("Auf den eigenen Weinberg bietet man nicht.", "You can't bid on your own vineyard.");
+        if (!double.IsInteger(amount) || amount < 0) return Lang.T("Ungültiger Betrag.", "Invalid amount.");
         if (amount == 0) return null;
-        if (amount < lot.StartPrice) return $"Der Ausrufpreis liegt bei {Util.FormatEuro(lot.StartPrice)}.";
-        if (amount > MaxAffordableBid(player)) return "Das Gebot ist nicht finanzierbar.";
+        if (amount < lot.StartPrice) return (Lang.En ? $"The starting price is {Util.FormatEuro(lot.StartPrice)}." : $"Der Ausrufpreis liegt bei {Util.FormatEuro(lot.StartPrice)}.");
+        if (amount > MaxAffordableBid(player)) return Lang.T("Das Gebot ist nicht finanzierbar.", "You can't afford this bid.");
         return null;
     }
 
@@ -235,13 +240,13 @@ public static class Auction
     {
         var lot = FindLot(state, lotId);
         if (lot is null || lot.Status != LotStatus.Open || string.IsNullOrEmpty(lot.Awaiting))
-            return "Bei diesem Weinberg kann gerade niemand bieten.";
+            return Lang.T("Bei diesem Weinberg kann gerade niemand bieten.", "Nobody can bid on this vineyard right now.");
         var bidder = state.Players.Find(p => p.Id == lot.Awaiting)!;
-        if (!double.IsInteger(amount)) return "Ungültiger Betrag.";
-        if (amount < NextMinimum(lot)) return $"Das Gebot muss mindestens {Util.FormatEuro(NextMinimum(lot))} betragen.";
+        if (!double.IsInteger(amount)) return Lang.T("Ungültiger Betrag.", "Invalid amount.");
+        if (amount < NextMinimum(lot)) return (Lang.En ? $"The bid must be at least {Util.FormatEuro(NextMinimum(lot))}." : $"Das Gebot muss mindestens {Util.FormatEuro(NextMinimum(lot))} betragen.");
         if (amount > MaxAffordableBid(bidder))
         {
-            return $"Das Gebot ist nicht finanzierbar (höchstens {Util.FormatEuro(MaxAffordableBid(bidder))}).";
+            return (Lang.En ? $"You can't afford this bid (at most {Util.FormatEuro(MaxAffordableBid(bidder))})." : $"Das Gebot ist nicht finanzierbar (höchstens {Util.FormatEuro(MaxAffordableBid(bidder))}).");
         }
         return null;
     }
@@ -250,7 +255,7 @@ public static class Auction
     {
         var lot = FindLot(state, lotId);
         if (lot is null || lot.Status != LotStatus.Open || string.IsNullOrEmpty(lot.Awaiting))
-            return "Bei diesem Weinberg kann gerade niemand aussteigen.";
+            return Lang.T("Bei diesem Weinberg kann gerade niemand aussteigen.", "Nobody can drop out of this vineyard right now.");
         return null;
     }
 
@@ -378,16 +383,16 @@ public static class Auction
     static void CloseLot(GameState state, AuctionLot lot)
     {
         var description =
-            $"{lot.Name} ({Util.JsNumber(lot.Hectares)} ha {(lot.Grape is { } grape ? Grapes.All[grape].Name : "Brache")}, {Regions.All[lot.RegionId].Name})";
+            (Lang.En ? $"{lot.Name} ({Util.JsNumber(lot.Hectares)} ha {(lot.Grape is { } grapeEn ? Grapes.All[grapeEn].Name : "fallow")}, {Regions.All[lot.RegionId].Name})" : $"{lot.Name} ({Util.JsNumber(lot.Hectares)} ha {(lot.Grape is { } grape ? Grapes.All[grape].Name : "Brache")}, {Regions.All[lot.RegionId].Name})");
         lot.Awaiting = null;
         if (string.IsNullOrEmpty(lot.Leader))
         {
             lot.Status = LotStatus.Unsold;
-            Util.AddLog(state, null, $"🔨 {description}: kein Gebot – der Weinberg bleibt unverkauft.");
+            Util.AddLog(state, null, (Lang.En ? $"🔨 {description}: no bid – the vineyard stays unsold." : $"🔨 {description}: kein Gebot – der Weinberg bleibt unverkauft."));
             if (SellerPlot(state, lot) is var (owner, kept) && kept is not null)
             {
                 kept.ForAuction = false;
-                Util.AddLog(state, owner!.Id, $"Für {kept.Name} fand sich kein Bieter – die Parzelle bleibt bei dir.", LogTone.Bad);
+                Util.AddLog(state, owner!.Id, (Lang.En ? $"No bidder found for {kept.Name} – the plot stays with you." : $"Für {kept.Name} fand sich kein Bieter – die Parzelle bleibt bei dir."), LogTone.Bad);
             }
             return;
         }
@@ -396,14 +401,14 @@ public static class Auction
         Util.AddLog(
             state,
             null,
-            $"🔨 Zuschlag: {description} geht für {Util.FormatEuro(lot.Price)} ({Util.JsNumber(ratio)} % des Schätzwerts) an {BidderName(state, lot.Leader, true)}.");
+            (Lang.En ? $"🔨 Sold: {description} for {Util.FormatEuro(lot.Price)} ({Util.JsNumber(ratio)} % of the estimate) to {BidderName(state, lot.Leader, true)}." : $"🔨 Zuschlag: {description} geht für {Util.FormatEuro(lot.Price)} ({Util.JsNumber(ratio)} % des Schätzwerts) an {BidderName(state, lot.Leader, true)}."));
         // Eingelieferte Parzelle: Sie verlässt das Gut des Einlieferers, der Erlös geht an ihn
         if (SellerPlot(state, lot) is var (seller, sold) && seller is not null)
         {
             if (sold is not null) seller.Plots = seller.Plots.Where(p => p.Id != sold.Id).ToList();
             seller.Money += lot.Price;
             Util.AddLog(state, seller.Id,
-                $"{lot.Name} versteigert: +{Util.FormatEuro(lot.Price)} ({Util.JsNumber(ratio)} % des Schätzwerts).", ratio >= Economy.PlotSaleShare * 100 ? LogTone.Good : LogTone.Bad);
+                (Lang.En ? $"{lot.Name} auctioned: +{Util.FormatEuro(lot.Price)} ({Util.JsNumber(ratio)} % of the estimate)." : $"{lot.Name} versteigert: +{Util.FormatEuro(lot.Price)} ({Util.JsNumber(ratio)} % des Schätzwerts)."), ratio >= Economy.PlotSaleShare * 100 ? LogTone.Good : LogTone.Bad);
         }
         var winner = state.Players.Find(p => p.Id == lot.Leader);
         if (winner is not null) AwardParcel(state, winner, lot);
@@ -451,7 +456,7 @@ public static class Auction
             var loan = Math.Min(-player.Money, Market.AvailableCredit(player));
             player.Loan += loan;
             player.Money += loan;
-            if (loan > 0) Util.AddLog(state, player.Id, $"Für den Kauf wurden {Util.FormatEuro(loan)} Kredit aufgenommen.");
+            if (loan > 0) Util.AddLog(state, player.Id, (Lang.En ? $"A loan of {Util.FormatEuro(loan)} was taken out for the purchase." : $"Für den Kauf wurden {Util.FormatEuro(loan)} Kredit aufgenommen."));
         }
     }
 }

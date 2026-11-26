@@ -148,8 +148,8 @@ public sealed class GameSession
             var me = next.Players.First(p => p.Ai is null);
             var best = ChallengeBest(next.Challenge);
             ChallengeMessage = RecordChallengeResult(next.Challenge, me.Points)
-                ? $"Neuer Tagesbestwert: {Util.JsNumber(me.Points)} Punkte!"
-                : $"{Util.JsNumber(me.Points)} Punkte – dein Bestwert heute: {Util.JsNumber(best ?? 0)} Punkte.";
+                ? Lang.En ? $"New best of the day: {Util.JsNumber(me.Points)} points!" : $"Neuer Tagesbestwert: {Util.JsNumber(me.Points)} Punkte!"
+                : Lang.En ? $"{Util.JsNumber(me.Points)} points – your best today: {Util.JsNumber(best ?? 0)} points." : $"{Util.JsNumber(me.Points)} Punkte – dein Bestwert heute: {Util.JsNumber(best ?? 0)} Punkte.";
         }
         audio.Play(Sounds.ForChange(previous, next) ?? Sound.Click);
         State = next;
@@ -226,9 +226,9 @@ public static class Sounds
     public static Sound? ForChange(GameState before, GameState after)
     {
         var fresh = after.Log.Skip(Math.Max(0, after.Log.Count - Math.Max(0, NewEntries(before, after)))).ToList();
-        if (fresh.Any(e => e.Text.Contains("Weinskandal"))) return Sound.Scandal;
-        if (fresh.Any(e => e.Text.Contains("Medaille") || e.Text.Contains("🥇") || e.Text.Contains("🥈") || e.Text.Contains("🥉"))) return Sound.Medal;
-        if (fresh.Any(e => e.Text.Contains("Frost"))) return Sound.Frost;
+        if (fresh.Any(e => e.Text.Contains("Weinskandal") || e.Text.Contains("wine scandal", StringComparison.OrdinalIgnoreCase))) return Sound.Scandal;
+        if (fresh.Any(e => e.Text.Contains("Medaille") || e.Text.Contains("medal", StringComparison.OrdinalIgnoreCase) || e.Text.Contains("🥇") || e.Text.Contains("🥈") || e.Text.Contains("🥉"))) return Sound.Medal;
+        if (fresh.Any(e => e.Text.Contains("Frost") || e.Text.Contains("frost"))) return Sound.Frost;
         if (after.Month != before.Month || after.Year != before.Year) return Sound.Month;
         var a = Rules.CurrentPlayer(after);
         var b = before.Players.FirstOrDefault(p => p.Id == a.Id);

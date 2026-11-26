@@ -57,7 +57,7 @@ public static class Vineyard
             if (Roll() < 0.4 * grape.DiseaseSusceptibility * (0.5 + region.Wetness / 10) * shield)
             {
                 plot.CropFactor *= 0.7;
-                Util.AddLog(state, player.Id, $"{plot.Name}: Peronospora (Falscher Mehltau) – rund 30 % weniger Ertrag.");
+                Util.AddLog(state, player.Id, Lang.En ? $"{plot.Name}: Peronospora (downy mildew) – about 30% lower yield." : $"{plot.Name}: Peronospora (Falscher Mehltau) – rund 30 % weniger Ertrag.");
             }
         }
         if (state.Month >= 6 && state.Month <= 8 && weather == WeatherKind.Sonnig)
@@ -65,14 +65,14 @@ public static class Vineyard
             if (Roll() < 0.25 * grape.DiseaseSusceptibility * shield)
             {
                 plot.Health = Math.Max(0, plot.Health - 0.2);
-                Util.AddLog(state, player.Id, $"{plot.Name}: Oidium (Echter Mehltau) – die Trauben leiden.");
+                Util.AddLog(state, player.Id, Lang.En ? $"{plot.Name}: Oidium (powdery mildew) – the grapes suffer." : $"{plot.Name}: Oidium (Echter Mehltau) – die Trauben leiden.");
             }
         }
         if (state.Month == 9 && grape.Color == GrapeColor.Rot && Roll() < 0.3 * shield)
         {
             plot.CropFactor *= 0.85;
             plot.Health = Math.Max(0, plot.Health - 0.1);
-            Util.AddLog(state, player.Id, $"{plot.Name}: Die Kirschessigfliege ist da – Verluste bei den roten Trauben.");
+            Util.AddLog(state, player.Id, Lang.En ? $"{plot.Name}: The spotted wing drosophila has arrived – losses among the red grapes." : $"{plot.Name}: Die Kirschessigfliege ist da – Verluste bei den roten Trauben.");
         }
 
         if (state.Month >= 9 && weather == WeatherKind.Nass)
@@ -96,8 +96,8 @@ public static class Vineyard
                     state,
                     player.Id,
                     plot.Botrytis
-                        ? $"{plot.Name}: Die Beeren schrumpfen zu Rosinen – {Util.JsNumber(Js.Round(plot.Oechsle))} °Oe!"
-                        : $"{plot.Name}: Edelfäule (Botrytis)! Weniger Menge, aber {Util.JsNumber(Js.Round(plot.Oechsle))} °Oe.");
+                        ? Lang.En ? $"{plot.Name}: The berries shrivel into raisins – {Util.JsNumber(Js.Round(plot.Oechsle))} °Oe!" : $"{plot.Name}: Die Beeren schrumpfen zu Rosinen – {Util.JsNumber(Js.Round(plot.Oechsle))} °Oe!"
+                        : Lang.En ? $"{plot.Name}: Noble rot (botrytis)! Less quantity, but {Util.JsNumber(Js.Round(plot.Oechsle))} °Oe." : $"{plot.Name}: Edelfäule (Botrytis)! Weniger Menge, aber {Util.JsNumber(Js.Round(plot.Oechsle))} °Oe.");
                 plot.Botrytis = true;
             }
         }
@@ -114,12 +114,12 @@ public static class Vineyard
         {
             if (player.FrostCandles)
             {
-                Util.AddLog(state, player.Id, "🕯️ Spätfrost in der Nacht – deine Frostkerzen haben die jungen Triebe gerettet.", LogTone.Good);
+                Util.AddLog(state, player.Id, Lang.T("🕯️ Spätfrost in der Nacht – deine Frostkerzen haben die jungen Triebe gerettet.", "🕯️ Late frost overnight – your frost candles saved the young shoots."), LogTone.Good);
             }
             else
             {
-                Util.AddLog(state, player.Id, "Spätfrost! Die jungen Triebe sind erfroren – rund 40 % weniger Ertrag in diesem Jahr.", LogTone.Bad);
-                Defense.CropLoss(state, player, plots, 1 - Economy.FrostLoss, "Spätfrost");
+                Util.AddLog(state, player.Id, Lang.T("Spätfrost! Die jungen Triebe sind erfroren – rund 40 % weniger Ertrag in diesem Jahr.", "Late frost! The young shoots froze – about 40% lower yield this year."), LogTone.Bad);
+                Defense.CropLoss(state, player, plots, 1 - Economy.FrostLoss, Lang.T("Spätfrost", "late frost"));
             }
         }
 
@@ -139,14 +139,14 @@ public static class Vineyard
             {
                 if (plot.HailNet)
                 {
-                    Util.AddLog(state, player.Id, $"Hagelschlag über {plot.Name} – das Hagelnetz hält das Meiste ab.", LogTone.Good);
-                    Defense.CropLoss(state, player, new List<Plot> { plot }, 1 - Economy.HailLoss * (1 - Economy.HailNetProtection), "Hagel");
+                    Util.AddLog(state, player.Id, Lang.En ? $"Hailstorm over {plot.Name} – the hail net stops most of it." : $"Hagelschlag über {plot.Name} – das Hagelnetz hält das Meiste ab.", LogTone.Good);
+                    Defense.CropLoss(state, player, new List<Plot> { plot }, 1 - Economy.HailLoss * (1 - Economy.HailNetProtection), Lang.T("Hagel", "hail"));
                 }
                 else
                 {
                     plot.Health = Math.Max(0, plot.Health - 0.1);
-                    Util.AddLog(state, player.Id, $"Hagelschlag über {plot.Name} – die Hälfte der Trauben ist zerstört.", LogTone.Bad);
-                    Defense.CropLoss(state, player, new List<Plot> { plot }, 1 - Economy.HailLoss, "Hagel");
+                    Util.AddLog(state, player.Id, Lang.En ? $"Hailstorm over {plot.Name} – half of the grapes are destroyed." : $"Hagelschlag über {plot.Name} – die Hälfte der Trauben ist zerstört.", LogTone.Bad);
+                    Defense.CropLoss(state, player, new List<Plot> { plot }, 1 - Economy.HailLoss, Lang.T("Hagel", "hail"));
                 }
             }
         }
@@ -166,8 +166,8 @@ public static class Vineyard
                 state,
                 player.Id,
                 watered == plots.Count
-                    ? "Hitzewelle: Die Bewässerung hält die Reben frisch – nur die Süße legt zu."
-                    : $"Hitzewelle: Sonnenbrand an den Trauben, etwas weniger Menge, dafür süßer{(watered != 0 ? " (bewässerte Lagen ohne Schaden)" : "")}.");
+                    ? Lang.T("Hitzewelle: Die Bewässerung hält die Reben frisch – nur die Süße legt zu.", "Heat wave: irrigation keeps the vines fresh – only the sweetness increases.")
+                    : Lang.En ? $"Heat wave: sunburn on the grapes, slightly less quantity, but sweeter{(watered != 0 ? " (irrigated sites undamaged)" : "")}." : $"Hitzewelle: Sonnenbrand an den Trauben, etwas weniger Menge, dafür süßer{(watered != 0 ? " (bewässerte Lagen ohne Schaden)" : "")}.");
         }
 
         if (Economy.DroughtMonths.Contains(state.Month) && weather == WeatherKind.Sonnig && Roll() < Defense.DroughtChance(state, player))
@@ -175,7 +175,7 @@ public static class Vineyard
             var dry = plots.Where(p => !p.Irrigation).ToList();
             if (dry.Count == 0)
             {
-                Util.AddLog(state, player.Id, "💧 Dürre im Hochsommer – deine Bewässerung bringt alle Lagen gut durch.", LogTone.Good);
+                Util.AddLog(state, player.Id, Lang.T("💧 Dürre im Hochsommer – deine Bewässerung bringt alle Lagen gut durch.", "💧 Drought in high summer – your irrigation gets all sites through well."), LogTone.Good);
             }
             else
             {
@@ -183,9 +183,9 @@ public static class Vineyard
                 Util.AddLog(
                     state,
                     player.Id,
-                    $"Dürre! Unbewässerte Reben leiden unter Trockenstress – rund {Util.JsNumber(Js.Round(Economy.DroughtLoss * 100))} % weniger Ertrag dort.",
+                    Lang.En ? $"Drought! Unirrigated vines suffer drought stress – about {Util.JsNumber(Js.Round(Economy.DroughtLoss * 100))}% lower yield there." : $"Dürre! Unbewässerte Reben leiden unter Trockenstress – rund {Util.JsNumber(Js.Round(Economy.DroughtLoss * 100))} % weniger Ertrag dort.",
                     LogTone.Bad);
-                Defense.CropLoss(state, player, dry, 1 - Economy.DroughtLoss, "Dürre");
+                Defense.CropLoss(state, player, dry, 1 - Economy.DroughtLoss, Lang.T("Dürre", "drought"));
             }
         }
     }
@@ -201,12 +201,12 @@ public static class Vineyard
     public static string? ValidateIceWineGamble(GameState state, Player player, string plotId, bool gamble)
     {
         var plot = player.Plots.Find(p => p.Id == plotId);
-        if (plot is null) return "Unbekannte Parzelle.";
-        if (!gamble) return plot.IceWineGamble ? null : "Die Parzelle ist nicht für Eiswein vorgesehen.";
-        if (state.Month != 11 && state.Month != 12) return "Für Eiswein entscheidet man im November oder Dezember.";
-        if (!Bearing(state, plot)) return "Hier hängen keine Trauben mehr.";
-        if (plot.IceWineGamble) return "Die Trauben hängen bereits für Eiswein.";
-        if (plot.Oechsle < Economy.IceWineMinOechsle) return $"Für Eiswein braucht es mindestens {Util.JsNumber(Economy.IceWineMinOechsle)} °Oe.";
+        if (plot is null) return Lang.T("Unbekannte Parzelle.", "Unknown plot.");
+        if (!gamble) return plot.IceWineGamble ? null : Lang.T("Die Parzelle ist nicht für Eiswein vorgesehen.", "The plot is not set aside for Eiswein.");
+        if (state.Month != 11 && state.Month != 12) return Lang.T("Für Eiswein entscheidet man im November oder Dezember.", "You decide on Eiswein in November or December.");
+        if (!Bearing(state, plot)) return Lang.T("Hier hängen keine Trauben mehr.", "No grapes hang here any more.");
+        if (plot.IceWineGamble) return Lang.T("Die Trauben hängen bereits für Eiswein.", "The grapes are already hanging for Eiswein.");
+        if (plot.Oechsle < Economy.IceWineMinOechsle) return Lang.En ? $"Eiswein needs at least {Util.JsNumber(Economy.IceWineMinOechsle)} °Oe." : $"Für Eiswein braucht es mindestens {Util.JsNumber(Economy.IceWineMinOechsle)} °Oe.";
         return null;
     }
 
@@ -221,7 +221,7 @@ public static class Vineyard
             plot.HarvestedThisYear = true;
             if (!frost)
             {
-                Util.AddLog(state, player.Id, $"{plot.Name}: Kein Frost – die Trauben für den Eiswein sind verloren.");
+                Util.AddLog(state, player.Id, Lang.En ? $"{plot.Name}: No frost – the grapes for the Eiswein are lost." : $"{plot.Name}: Kein Frost – die Trauben für den Eiswein sind verloren.");
                 continue;
             }
             var grape = Grapes.All[plot.Grape!.Value];
@@ -245,23 +245,23 @@ public static class Vineyard
             Util.AddLog(
                 state,
                 player.Id,
-                $"Klirrender Frost! {plot.Name}: {Util.JsNumber(hectoliters)} hl Eiswein mit {Util.JsNumber(Js.Round(oechsle))} °Oe gelesen ({Util.FormatEuro(cost)}).");
+                Lang.En ? $"Bitter frost! {plot.Name}: {Util.JsNumber(hectoliters)} hl of Eiswein harvested at {Util.JsNumber(Js.Round(oechsle))} °Oe ({Util.FormatEuro(cost)})." : $"Klirrender Frost! {plot.Name}: {Util.JsNumber(hectoliters)} hl Eiswein mit {Util.JsNumber(Js.Round(oechsle))} °Oe gelesen ({Util.FormatEuro(cost)}).");
         }
     }
 
     public static string? ValidateProtection(Player player, ProtectionStrategy strategy) =>
-        player.Protection == strategy ? "Diese Strategie ist bereits gewählt." : null;
+        player.Protection == strategy ? Lang.T("Diese Strategie ist bereits gewählt.", "This strategy is already selected.") : null;
 
     public static void SetProtection(GameState state, Player player, ProtectionStrategy strategy)
     {
-        if (player.Protection == ProtectionStrategy.Bio) Bio.LoseBio(state, player, "kein Bio-Pflanzenschutz mehr");
+        if (player.Protection == ProtectionStrategy.Bio) Bio.LoseBio(state, player, Lang.T("kein Bio-Pflanzenschutz mehr", "no longer using organic crop protection"));
         player.Protection = strategy;
         player.BioSince = strategy == ProtectionStrategy.Bio ? Bio.GameMonth(state) : null;
         Util.AddLog(
             state,
             player.Id,
             strategy == ProtectionStrategy.Bio
-                ? "Umstellung auf Bio-Weinbau begonnen – nach zwei Jahren kann das Grünblatt-Siegel beantragt werden."
-                : $"Pflanzenschutz: {Economy.Protection[strategy].Name}.");
+                ? Lang.T("Umstellung auf Bio-Weinbau begonnen – nach zwei Jahren kann das Grünblatt-Siegel beantragt werden.", "Conversion to organic viticulture started – after two years the Grünblatt seal can be applied for.")
+                : Lang.En ? $"Crop protection: {Economy.Protection[strategy].Name}." : $"Pflanzenschutz: {Economy.Protection[strategy].Name}.");
     }
 }

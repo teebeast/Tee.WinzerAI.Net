@@ -1,5 +1,6 @@
 using DrawnUi.Draw;
 using SkiaSharp;
+using Winzer.Engine;
 using Winzer.Presentation;
 
 namespace Winzer.Ui.Scenes;
@@ -43,17 +44,18 @@ public static class LexiconOverlay
         book.Block();
 
         // Linke Seite: Register und Begriffsliste
-        book.With(Kit.Text("Lexikon", 70, 46, 500, 60, 46, Theme.Ink, bold: true, serif: true));
-        book.With(Kit.Text("Kurz erklärt – ersetzt das Handbuch.", 70, 106, 560, 28, 20, Theme.InkSoft));
+        book.With(Kit.Text(Lang.T("Lexikon", "Lexicon"), 70, 46, 500, 60, 46, Theme.Ink, bold: true, serif: true));
+        book.With(Kit.Text(Lang.T("Kurz erklärt – ersetzt das Handbuch.", "Briefly explained – replaces the manual."), 70, 106, 560, 28, 20, Theme.InkSoft));
         var letters = entries.Select(e => char.ToUpperInvariant(e.Term[0])).Distinct().ToList();
         var current = char.ToUpperInvariant(entry.Term[0]);
+        var step = Math.Min(39, 655.0 / letters.Count); // die englische Liste hat mehr Anfangsbuchstaben
         for (var i = 0; i < letters.Count; i++)
         {
             var letter = letters[i];
             var on = letter == current;
             var first = IndexOfLetter(letter);
-            book.With(Kit.Box(70 + i * 39, 150, 34, 42, on ? Theme.Wine : Theme.C("#59d9c7a3"), 9)
-                .With(Kit.Text(letter.ToString(), 0, 8, 34, 28, 20, on ? Theme.Paper : Theme.Ink, bold: true, serif: true, align: Align.Center))
+            book.With(Kit.Box(70 + i * step, 150, step - 5, 42, on ? Theme.Wine : Theme.C("#59d9c7a3"), 9)
+                .With(Kit.Text(letter.ToString(), 0, 8, step - 5, 28, 20, on ? Theme.Paper : Theme.Ink, bold: true, serif: true, align: Align.Center))
                 .Tap(() => Open(first)));
         }
         for (var i = 0; i < PerPage; i++)
@@ -70,7 +72,7 @@ public static class LexiconOverlay
         book.With(Kit.Pager(70, 800, 660, page, pages, p => nav.SetPage(PageKey, p), dark: false));
 
         // Rechte Seite: der gewählte Begriff
-        book.With(Kit.Text($"Begriff {selected + 1} von {entries.Count}", 810, 56, 500, 28, 19, Theme.InkSoft));
+        book.With(Kit.Text(Lang.En ? $"Term {selected + 1} of {entries.Count}" : $"Begriff {selected + 1} von {entries.Count}", 810, 56, 500, 28, 19, Theme.InkSoft));
         var longTitle = entry.Term.Length > 24;
         book.With(Kit.Text(entry.Term, 810, longTitle ? 96 : 90, 610, 60, longTitle ? 37 : 46, Theme.Wine, bold: true, serif: true));
         const double top = 166;
@@ -87,7 +89,7 @@ public static class LexiconOverlay
         }
         book.With(Kit.Box(1430, 42, 48, 48, Theme.PaperLine, 12)
             .With(Kit.Text("✕", 0, 10, 48, 30, 21, Theme.Ink, bold: true, align: Align.Center))
-            .Tap(Close).Tip("Schließen"));
+            .Tap(Close).Tip(Lang.T("Schließen", "Close")));
 
         return Overlays.Backdrop(onTap: Close).With(book);
     }

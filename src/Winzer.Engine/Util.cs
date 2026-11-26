@@ -23,6 +23,13 @@ public static class Util
         NegativeSign = "-",
     };
 
+    static readonly NumberFormatInfo English = new()
+    {
+        NumberGroupSeparator = ",",
+        NumberDecimalSeparator = ".",
+        NegativeSign = "-",
+    };
+
     public static string NewId(GameState state, string prefix) => $"{prefix}{state.NextId++}";
 
     /// <summary><paramref name="playerId"/> null = öffentliche Meldung, die alle Spieler sehen</summary>
@@ -33,7 +40,8 @@ public static class Util
     }
 
     /// <summary>Wie toLocaleString('de-DE', Währung EUR, ohne Nachkommastellen): „1.234 €“ mit geschütztem Leerzeichen.</summary>
-    public static string FormatEuro(double value) => FormatNumber(value) + " €";
+    public static string FormatEuro(double value) =>
+        Lang.En ? (Math.Round(value) < 0 ? "-€" + FormatNumber(-value) : "€" + FormatNumber(value)) : FormatNumber(value) + " €";
 
     /// <summary>Zahl wie in einem JavaScript-Template (<c>`${x}`</c>): kürzeste eindeutige Darstellung mit Punkt.</summary>
     public static string JsNumber(double value) => value.ToString(CultureInfo.InvariantCulture);
@@ -44,6 +52,6 @@ public static class Util
         var rounded = Math.Round(value, maxDecimals, MidpointRounding.AwayFromZero);
         if (rounded == 0) rounded = 0; // kein „-0“
         var format = maxDecimals == 0 ? "#,##0" : "#,##0." + new string('#', maxDecimals);
-        return rounded.ToString(format, German);
+        return rounded.ToString(format, Lang.En ? English : German);
     }
 }

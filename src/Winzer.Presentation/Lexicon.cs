@@ -1,3 +1,5 @@
+using Winzer.Engine;
+
 namespace Winzer.Presentation;
 
 public sealed record LexiconEntry(string Term, string Text);
@@ -9,7 +11,7 @@ public static class Lexicon
     /// Die Begriffe in deutscher Sortierung (Umlaute wie ihre Grundbuchstaben). Die Reihenfolge steht fest im
     /// Quelltext, damit sie nicht von den Kultureinstellungen des Kopfes abhängt – neue Einträge passend einsortieren.
     /// </summary>
-    public static readonly IReadOnlyList<LexiconEntry> Entries =
+    static readonly IReadOnlyList<LexiconEntry> EntriesDe =
     [
         new("Amtliche Prüfung (AP-Nummer)",
             "Jeder Qualitätswein muss vor dem Verkauf eine amtliche Prüfung bestehen. Erst dann darf er seine Stufe (Kabinett, Spätlese …) tragen. Im Spiel bringt die Prüfung Siegpunkte und ist Voraussetzung für Großhandel, Export und Prämierungen. Ab 5 hl (665 Flaschen)."),
@@ -93,5 +95,94 @@ public static class Lexicon
             "Verkaufs- und Probierraum direkt am Weingut. Lockt Gäste an und steigert den Ab-Hof-Verkauf."),
         new("Weinbergversteigerung",
             "Alle 8–16 Monate kommen Weinberge unter den Hammer, angekündigt einen Monat vorher. Geboten wird live gegen Nachbarn und auswärtige Investoren: Wer bereit ist, am meisten zu zahlen, bekommt den Zuschlag."),
+    ];
+
+    /// <summary>Die Begriffe der gewählten Sprache; die englische Liste ist englisch alphabetisch sortiert.</summary>
+    public static IReadOnlyList<LexiconEntry> Entries => Lang.En ? EntriesEn : EntriesDe;
+
+    static readonly IReadOnlyList<LexiconEntry> EntriesEn =
+    [
+        new("Adulteration",
+            "Illegal stretching or doctoring of wine – with water, sugar or (as in the 1985 glycol scandal) antifreeze. If it comes out, a scandal follows with a fine, seizure and damage to your image."),
+        new("Auslese",
+            "Prädikat wine from fully ripe grapes of 90 °Oechsle and up. Often hand-selected, noble and sought after."),
+        new("Barrique",
+            "Small 225-liter oak barrel. Wine ages in it for twelve months, takes on toasted aromas and becomes rounder – red wine benefits most (+6 quality, white wine +2). Barrique space is expensive."),
+        new("Beerenauslese (BA)",
+            "Noble sweet wine from 110 °Oechsle, usually only possible when noble rot has concentrated the berries."),
+        new("Bulk wine",
+            "Unbottled wine sold directly to large wineries. Brings money at once, but not much. The classic lifeline when the till is empty."),
+        new("Cellar master",
+            "In charge of fermentation, aging and bottling. Depending on talent he adds +1 to +5 quality to every vintage, up to +2 more with years of service. Skills decide what is possible in the cellar: sparkling wine and barrique only with the right know-how, specialists for red, white or noble sweet wines add extra quality."),
+        new("Climate change",
+            "It gets warmer: grapes ripen earlier and sweeter, heat waves increase, hard December frosts – and with them Eiswein – become rarer. Red wine increasingly thrives in cool regions too."),
+        new("Crop insurance",
+            "Taken out from January to April for the current year, it covers 80% of crop damage from frost, hail, drought and storms. In frost-prone regions the premium is higher."),
+        new("Customer order",
+            "Hotels, restaurants, airlines or clubs order a large quantity of a specific wine once, due by a deadline. They pay well and bring points – if you do not deliver in time, you pay a contract penalty."),
+        new("Drip irrigation",
+            "Hoses give each vine water exactly where needed. Protects against heat damage and drought, which increase with climate change."),
+        new("Eiswein",
+            "The grapes stay on the vine until the first hard frost (−7 °C) and are harvested frozen. The water stays behind as ice in the press, leaving a highly concentrated must. Tiny quantity, huge value – but without frost everything is lost."),
+        new("Export",
+            "Importers from abroad occasionally ask for fixed quantities over a year. They pay well but demand reliable delivery: shortfalls cost a contract penalty."),
+        new("Federweisser",
+            "Fresh, still fermenting must – sweet, bubbly and only available in autumn. Made from red grapes it is called Roter Rauscher. Brings quick money at harvest time, but only as much as customers will drink."),
+        new("Frost candles",
+            "Paraffin candles between the vine rows raise the temperature by the decisive degrees on clear frost nights. In April and May they protect the young shoots from late frost."),
+        new("Hail net",
+            "Fine-meshed nets over the vine rows catch hailstones. Expensive to buy, but they stop most of the damage – with climate change it hails more often."),
+        new("Kabinett",
+            "Lightest Prädikat wine, from 73 °Oechsle. Fresh, often with a fine residual sweetness."),
+        new("Late frost",
+            "Frost in April or May, when the young shoots have already sprouted. Frozen shoots bear hardly any grapes – a nightmare for any winemaker."),
+        new("Market trend",
+            "How much in demand a grape variety or sparkling wine currently is – a price factor between 80% and 130% on all sales prices. Trends drift over many months; since new vines only bear in the third year, every planting is a bet on the market of the day after tomorrow."),
+        new("Milestone",
+            "An intermediate goal such as the first gold medal, 50 hectares or the Lunaris seal. Bronze, silver and gold bring a few points and some reputation; milestones reached are listed with their date in the chronicle under “Achievements”."),
+        new("Neighbors",
+            "The AI rivals remember how you treat them. Friendly neighbors offer joint fair stands, wine purchases or harvest help; if you sabotage them or snatch their vineyards, expect discount campaigns, public criticism or – from the Sly fox – revenge."),
+        new("Noble rot (botrytis)",
+            "A fungus that attacks ripe berries in changeable autumn weather. The berries shrivel and lose water – the quantity drops sharply, but sugar and aroma concentrate. The basis for Beerenauslese and Trockenbeerenauslese. In continuous rain it turns into harmful gray rot instead."),
+        new("Oechsle (°Oe)",
+            "A measure of must weight, i.e. the sugar content of the grapes. The more sun and ripening time, the higher. Decides the quality level – from Deutscher Wein up to Trockenbeerenauslese."),
+        new("Official testing (AP number)",
+            "Every quality wine must pass an official test before sale. Only then may it carry its level (Kabinett, Spätlese …). In the game the test brings points and is required for wholesale, export and wine awards. From 5 hl (665 bottles)."),
+        new("Oidium (powdery mildew)",
+            "A fungal disease that appears in warm, dry weather. A gray coating covers leaves and berries, and quality suffers."),
+        new("Organic seal",
+            "After two years of conversion you can apply for the Grünblatt seal, then the stricter association seals Terravita and Lunaris (biodynamic). Higher levels bring better prices and loyal customers, but cost application and annual fees."),
+        new("Organic viticulture",
+            "Doing without synthetic crop protection. Protection is somewhat weaker and more expensive. Switching starts the two-year conversion – after that the first organic seal can be applied for."),
+        new("Peronospora (downy mildew)",
+            "The most feared fungal disease in viticulture. Spreads in humid, warm weather and can destroy whole harvests. Crop protection lowers the risk considerably."),
+        new("PIWI",
+            "Fungus-resistant grape varieties such as Regent or Solaris. They need hardly any crop protection, but customers still regard them as less noble (−10% in price)."),
+        new("Qualitätswein",
+            "Wine from a specific growing region, from 60 °Oechsle and with official testing. The basis of German wine law."),
+        new("Rosé",
+            "Made from red grapes but pressed light: the must only stays briefly on the skins. Ready to drink quickly, especially popular in summer – and sometimes more, sometimes less fashionable."),
+        new("Sabotage",
+            "Spreading rumors or damaging vines – risky, since the culprit is caught in 30% of cases. Whoever is sabotaged can react: set a detective on the unknown culprit, sue a caught culprit for damages or hire a night watch that almost always catches saboteurs for a year."),
+        new("Sekt (sparkling wine)",
+            "Sparkling wine from a second fermentation in the bottle (traditional bottle fermentation). Ages nine months on the lees, is laborious – but a good estate Sekt is in demand and brings points."),
+        new("Site",
+            "The exact area of a vineyard with its microclimate, soil and slope. Top sites bring better wines and cost correspondingly more at auctions."),
+        new("Spätlese",
+            "Prädikat wine from later-picked, riper grapes of 80 °Oechsle and up. The classic among German Prädikat wines."),
+        new("Spotted wing drosophila",
+            "An introduced pest that in late summer mainly punctures thin-skinned red grapes. Consequences: sour rot and crop loss."),
+        new("Steep slope",
+            "A vineyard with a gradient of more than 30%, often workable by hand only. Upkeep and harvest are more expensive, but sun and meagre soils yield especially good wines – the Mosel and Mittelrhein are famous for it."),
+        new("Trockenbeerenauslese (TBA)",
+            "The crowning glory: from noble-rotted, raisin-like shrivelled berries of 150 °Oechsle and up. Tiny quantities, highest prices."),
+        new("Vineyard auction",
+            "Every 8–16 months vineyards go under the hammer, announced a month in advance. Bidding is live against neighbors and outside investors: whoever is willing to pay the most gets the lot."),
+        new("Wine awards",
+            "Wine competitions where expert juries award medals – regional in June, nationwide at the Große Rebenkrone in November. Medals bring points and reputation."),
+        new("Wine room",
+            "A sales and tasting room right at the estate. Attracts guests and boosts cellar-door sales."),
+        new("Wine tavern (Straußwirtschaft)",
+            "Serving on your own farm, at most four months a year – recognizable by the bunch of twigs (Strauß) above the door. Attracts guests and brings more cellar-door sales."),
     ];
 }

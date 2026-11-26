@@ -34,7 +34,7 @@ internal static class CellarTanks
         var freeBarrique = Math.Max(0, player.BarriqueCapacityHl - usedBarrique);
         scene.With(CellarParts.Gauge(836, 22, 186, "Tank", $"{Util.FormatNumber(usedTank, 1)} / {Util.FormatNumber(player.TankCapacityHl)} hl",
             player.TankCapacityHl > 0 ? usedTank / player.TankCapacityHl : 0, Theme.Gold));
-        scene.With(CellarParts.Gauge(1044, 22, 186, "Barrique", player.BarriqueCapacityHl > 0 ? $"{Util.FormatNumber(usedBarrique, 1)} / {Util.FormatNumber(player.BarriqueCapacityHl)} hl" : "keins",
+        scene.With(CellarParts.Gauge(1044, 22, 186, "Barrique", player.BarriqueCapacityHl > 0 ? $"{Util.FormatNumber(usedBarrique, 1)} / {Util.FormatNumber(player.BarriqueCapacityHl)} hl" : Lang.T("keins", "none"),
             player.BarriqueCapacityHl > 0 ? usedBarrique / player.BarriqueCapacityHl : 0, Theme.C("#c08a52")));
 
         // ---- Tanks ----
@@ -55,25 +55,25 @@ internal static class CellarTanks
                 var id = b.Id;
                 slot.With(Kit.Text(CellarParts.GrapeName(b) + (b.Adulterated is not null ? " 🧪" : ""), 0, 410, 168, 26, 18, on ? Theme.Gold : Theme.Cream, bold: true, align: Align.Center));
                 slot.With(Kit.Text((b.Rose ? "Rosé " : "") + Quality.QualityInfo(b.Level).Name, 0, 435, 168, 24, 16, Theme.CreamSoft, align: Align.Center));
-                slot.With(Kit.Text($"{CellarParts.Hl(b.Hectoliters)} · {(b.MonthsUntilReady > 0 ? $"noch {b.MonthsUntilReady} Mon." : "reif")}", 0, 458, 168, 24, 16,
+                slot.With(Kit.Text(Lang.En ? $"{CellarParts.Hl(b.Hectoliters)} · {(b.MonthsUntilReady > 0 ? $"{b.MonthsUntilReady} mo. left" : "ready")}" : $"{CellarParts.Hl(b.Hectoliters)} · {(b.MonthsUntilReady > 0 ? $"noch {b.MonthsUntilReady} Mon." : "reif")}", 0, 458, 168, 24, 16,
                     b.MonthsUntilReady > 0 ? Theme.CreamSoft : Theme.GoodLight, align: Align.Center));
                 slot.Tap(() => nav.Select(Area, id));
             }
             else if (i == shown.Count)
             {
-                slot.With(Kit.Text(freeTank > 0 ? "leer" : "Tanks voll", 0, 410, 168, 26, 18, freeTank > 0 ? Theme.CreamSoft : Theme.Warn, align: Align.Center));
-                slot.With(Kit.Text($"{CellarParts.Hl(freeTank)} frei", 0, 435, 168, 24, 16, Theme.CreamSoft, align: Align.Center));
+                slot.With(Kit.Text(freeTank > 0 ? Lang.T("leer", "empty") : Lang.T("Tanks voll", "Tanks full"), 0, 410, 168, 26, 18, freeTank > 0 ? Theme.CreamSoft : Theme.Warn, align: Align.Center));
+                slot.With(Kit.Text(Lang.En ? $"{CellarParts.Hl(freeTank)} free" : $"{CellarParts.Hl(freeTank)} frei", 0, 435, 168, 24, 16, Theme.CreamSoft, align: Align.Center));
             }
             scene.With(slot);
         }
-        scene.With(BuySlot(26 + TanksPerPage * 170, 118, 366, "Tank kaufen", $"{Util.FormatEuro(Economy.TankCostPerHl)} je hl", buying == BuyTank, () => nav.Select(Area, BuyTank)));
-        if (tankPages > 1) scene.With(Kit.Pager(930, 80, 300, tankPage, tankPages, p => nav.SetPage("keller.tanks", p), noun: "Tanks · Seite"));
+        scene.With(BuySlot(26 + TanksPerPage * 170, 118, 366, Lang.T("Tank kaufen", "Buy tank"), Lang.En ? $"{Util.FormatEuro(Economy.TankCostPerHl)} per hl" : $"{Util.FormatEuro(Economy.TankCostPerHl)} je hl", buying == BuyTank, () => nav.Select(Area, BuyTank)));
+        if (tankPages > 1) scene.With(Kit.Pager(930, 80, 300, tankPage, tankPages, p => nav.SetPage("keller.tanks", p), noun: Lang.T("Tanks · Seite", "Tanks · page")));
 
         // ---- Barrique ----
         scene.With(Kit.Text("Barrique", 40, 612, 150, 34, 24, Theme.Gold, bold: true, serif: true));
         scene.With(Kit.Text(player.BarriqueCapacityHl > 0
-            ? $"{CellarParts.Hl(usedBarrique)} belegt · {CellarParts.Hl(freeBarrique)} frei – {Economy.BarriqueMonths} Monate im Eichenfass, vor allem Rotwein gewinnt an Güte"
-            : "Noch keine Fässer – Eichenfässer heben die Güte, vor allem bei Rotwein", 180, 619, 700, 26, 17, Theme.CreamSoft));
+            ? (Lang.En ? $"{CellarParts.Hl(usedBarrique)} used · {CellarParts.Hl(freeBarrique)} free – {Economy.BarriqueMonths} months in oak, red wine gains the most quality" : $"{CellarParts.Hl(usedBarrique)} belegt · {CellarParts.Hl(freeBarrique)} frei – {Economy.BarriqueMonths} Monate im Eichenfass, vor allem Rotwein gewinnt an Güte")
+            : Lang.T("Noch keine Fässer – Eichenfässer heben die Güte, vor allem bei Rotwein", "No barrels yet – oak barrels raise quality, especially for red wine"), 180, 619, 700, 26, 17, Theme.CreamSoft));
         var barrelPages = Math.Max(1, (int)Math.Ceiling(barrels.Count / (double)BarrelsPerPage));
         var barrelPage = nav.Page("keller.barrels", barrelPages);
         var shownBarrels = barrels.Skip(barrelPage * BarrelsPerPage).Take(BarrelsPerPage).ToList();
@@ -88,18 +88,18 @@ internal static class CellarTanks
             {
                 var id = b.Id;
                 slot.With(Kit.Text(CellarParts.GrapeName(b) + (b.Adulterated is not null ? " 🧪" : ""), 0, 146, 190, 26, 18, on ? Theme.Gold : Theme.Cream, bold: true, align: Align.Center));
-                slot.With(Kit.Text($"{CellarParts.Hl(b.Hectoliters)} · {(b.MonthsUntilReady > 0 ? $"noch {b.MonthsUntilReady} Mon." : "reif")}", 0, 172, 190, 24, 16,
+                slot.With(Kit.Text(Lang.En ? $"{CellarParts.Hl(b.Hectoliters)} · {(b.MonthsUntilReady > 0 ? $"{b.MonthsUntilReady} mo. left" : "ready")}" : $"{CellarParts.Hl(b.Hectoliters)} · {(b.MonthsUntilReady > 0 ? $"noch {b.MonthsUntilReady} Mon." : "reif")}", 0, 172, 190, 24, 16,
                     b.MonthsUntilReady > 0 ? Theme.CreamSoft : Theme.GoodLight, align: Align.Center));
                 slot.Tap(() => nav.Select(Area, id));
             }
             else if (i == shownBarrels.Count && owned)
             {
-                slot.With(Kit.Text($"{CellarParts.Hl(freeBarrique)} frei", 0, 146, 190, 26, 18, Theme.CreamSoft, align: Align.Center));
+                slot.With(Kit.Text(Lang.En ? $"{CellarParts.Hl(freeBarrique)} free" : $"{CellarParts.Hl(freeBarrique)} frei", 0, 146, 190, 26, 18, Theme.CreamSoft, align: Align.Center));
             }
             scene.With(slot);
         }
-        scene.With(BuySlot(1046, 654, 124, "Fässer kaufen", $"{Util.FormatEuro(Economy.BarriqueCostPerHl)} je hl", buying == BuyBarrique, () => nav.Select(Area, BuyBarrique)));
-        if (barrelPages > 1) scene.With(Kit.Pager(930, 610, 300, barrelPage, barrelPages, p => nav.SetPage("keller.barrels", p), noun: "Fässer · Seite"));
+        scene.With(BuySlot(1046, 654, 124, Lang.T("Fässer kaufen", "Buy barrels"), Lang.En ? $"{Util.FormatEuro(Economy.BarriqueCostPerHl)} per hl" : $"{Util.FormatEuro(Economy.BarriqueCostPerHl)} je hl", buying == BuyBarrique, () => nav.Select(Area, BuyBarrique)));
+        if (barrelPages > 1) scene.With(Kit.Pager(930, 610, 300, barrelPage, barrelPages, p => nav.SetPage("keller.barrels", p), noun: Lang.T("Fässer · Seite", "Barrels · page")));
 
         scene.With(Notes(session));
 
@@ -149,9 +149,9 @@ internal static class CellarTanks
         var player = session.Player;
         var lines = new List<(string Text, Color Dot, Action? Tap)> { (CellarParts.DemandText(player), Theme.Gold, null) };
         if (CellarParts.MasterHint(player) is { } hint)
-            lines.Add(($"{hint} Bewerber findest du unter „Kellermeister“ ›", Theme.Warn, () => session.Nav.SetTab(3)));
+            lines.Add((Lang.En ? $"{hint} Find candidates under “Cellar master” ›" : $"{hint} Bewerber findest du unter „Kellermeister“ ›", Theme.Warn, () => session.Nav.SetTab(3)));
         if (state.BulkCrisisMonths > 0)
-            lines.Add(($"Krise der Großkellereien: Fasswein bringt noch {CellarParts.Months(state.BulkCrisisMonths)} nur den halben Preis.", Theme.C("#ff9b8a"), () => session.Nav.SetTab(2)));
+            lines.Add((Lang.En ? $"Large-winery crisis: bulk wine fetches only half price for {CellarParts.Months(state.BulkCrisisMonths)}." : $"Krise der Großkellereien: Fasswein bringt noch {CellarParts.Months(state.BulkCrisisMonths)} nur den halben Preis.", Theme.C("#ff9b8a"), () => session.Nav.SetTab(2)));
         var panel = Kit.Glass(28, 866, 1202, 96, 16, shadow: false);
         var y = (96 - lines.Count * 28) / 2.0;
         foreach (var line in lines)
@@ -174,8 +174,8 @@ internal static class CellarTanks
         var nav = session.Nav;
         var card = CellarParts.Inspector();
         var (name, vintage) = CellarParts.NameOf(batch);
-        var vessel = batch.Barrique ? "Barriquefass" : "Edelstahltank";
-        if (batch.Adulterated is { } method) CellarParts.Head(card, name, $"Jg. {batch.Vintage} · {(batch.Barrique ? "Barrique" : "Tank")} · gepanscht: {Economy.Adulteration[method].Name}", Theme.Alert);
+        var vessel = batch.Barrique ? Lang.T("Barriquefass", "Barrique barrel") : Lang.T("Edelstahltank", "Stainless steel tank");
+        if (batch.Adulterated is { } method) CellarParts.Head(card, name, Lang.En ? $"Vintage {batch.Vintage} · {(batch.Barrique ? "Barrique" : "Tank")} · adulterated: {Economy.Adulteration[method].Name}" : $"Jg. {batch.Vintage} · {(batch.Barrique ? "Barrique" : "Tank")} · gepanscht: {Economy.Adulteration[method].Name}", Theme.Alert);
         else CellarParts.Head(card, name, $"{vintage} · {vessel}");
 
         card.With(CellarParts.QualityRing(CellarParts.Pad, 108, batch.Quality));
@@ -185,21 +185,21 @@ internal static class CellarTanks
         probe.CopyInfoFrom(batch);
         var trend = CellarParts.TrendValue(CellarParts.TrendOf(state, batch));
         const double rx = 186, rw = 306;
-        card.With(Kit.Row("Stufe", Quality.QualityInfo(batch.Level).Name, rx, 108, rw, size: 18));
-        card.With(Kit.Row("Mostgewicht", $"{Util.FormatNumber(batch.Oechsle)} °Oe", rx, 142, rw, size: 18));
-        card.With(Kit.Row("Menge", $"{CellarParts.Hl(batch.Hectoliters)} · {Util.FormatNumber(bottlesAll)} Fl.", rx, 176, rw, size: 18));
-        card.With(Kit.Row("Reife", batch.MonthsUntilReady > 0 ? $"noch {CellarParts.Months(batch.MonthsUntilReady)}" : "ausgebaut", rx, 210, rw,
+        card.With(Kit.Row(Lang.T("Stufe", "Level"), Quality.QualityInfo(batch.Level).Name, rx, 108, rw, size: 18));
+        card.With(Kit.Row(Lang.T("Mostgewicht", "Must weight"), $"{Util.FormatNumber(batch.Oechsle)} °Oe", rx, 142, rw, size: 18));
+        card.With(Kit.Row(Lang.T("Menge", "Amount"), $"{CellarParts.Hl(batch.Hectoliters)} · {Util.FormatNumber(bottlesAll)} {Lang.T("Fl.", "btl.")}", rx, 176, rw, size: 18));
+        card.With(Kit.Row(Lang.T("Reife", "Maturity"), batch.MonthsUntilReady > 0 ? (Lang.En ? $"{CellarParts.Months(batch.MonthsUntilReady)} left" : $"noch {CellarParts.Months(batch.MonthsUntilReady)}") : Lang.T("ausgebaut", "matured"), rx, 210, rw,
             batch.MonthsUntilReady > 0 ? Theme.Ink : Theme.Good, 18));
-        card.With(Kit.Row("Markttrend", trend.Text, rx, 244, rw, trend.Color, 18));
-        card.With(Kit.Row("Wert ab Hof", $"≈ {Util.FormatEuro(Market.BottlePrice(probe, player, state) * RulesV2.DirectPriceFactor(state, player) * bottlesAll)}", rx, 278, rw, size: 18));
+        card.With(Kit.Row(Lang.T("Markttrend", "Market trend"), trend.Text, rx, 244, rw, trend.Color, 18));
+        card.With(Kit.Row(Lang.T("Wert ab Hof", "Cellar-door value"), $"≈ {Util.FormatEuro(Market.BottlePrice(probe, player, state) * RulesV2.DirectPriceFactor(state, player) * bottlesAll)}", rx, 278, rw, size: 18));
         card.With(CellarParts.Divider(322));
 
         var share = nav.Amount("keller.amount");
         var amount = AmountOf(share, batch.Hectoliters);
         var bottles = Market.HlToBottles(amount);
-        card.With(Kit.Text("Menge für die Aktion", CellarParts.Pad, 334, CellarParts.Inner, 30, 20, Theme.Ink, bold: true));
+        card.With(Kit.Text(Lang.T("Menge für die Aktion", "Amount for the action"), CellarParts.Pad, 334, CellarParts.Inner, 30, 20, Theme.Ink, bold: true));
         card.With(Kit.AmountSlider(CellarParts.Pad, 374, CellarParts.Inner, share,
-            $"{CellarParts.Hl(amount)} von {CellarParts.Hl(batch.Hectoliters)}", s => nav.SetAmount("keller.amount", s)));
+            Lang.En ? $"{CellarParts.Hl(amount)} of {CellarParts.Hl(batch.Hectoliters)}" : $"{CellarParts.Hl(amount)} von {CellarParts.Hl(batch.Hectoliters)}", s => nav.SetAmount("keller.amount", s)));
 
         var id = batch.Id;
         var fresh = Products.IsFreshMust(state, batch) && Economy.FederweisserMonths.Contains(state.Month);
@@ -207,24 +207,24 @@ internal static class CellarTanks
         if (nav.Selected("keller.more") != "1")
         {
             var bottle = new GameAction.Bottle(id, amount);
-            card.With(CellarParts.Action("Abfüllen", CellarParts.Pad, top, CellarParts.Inner, 84, () => session.Run(bottle), ButtonKind.Primary,
-                $"{Util.FormatNumber(bottles)} Flaschen · kostet {Util.FormatEuro(Js.Round(bottles * Cellar.BottleCost(player)))}", session.Problem(bottle)));
+            card.With(CellarParts.Action(Lang.T("Abfüllen", "Bottle"), CellarParts.Pad, top, CellarParts.Inner, 84, () => session.Run(bottle), ButtonKind.Primary,
+                Lang.En ? $"{Util.FormatNumber(bottles)} bottles · costs {Util.FormatEuro(Js.Round(bottles * Cellar.BottleCost(player)))}" : $"{Util.FormatNumber(bottles)} Flaschen · kostet {Util.FormatEuro(Js.Round(bottles * Cellar.BottleCost(player)))}", session.Problem(bottle)));
 
             var bulk = new GameAction.SellBulk(id, amount);
-            card.With(CellarParts.Action("Als Fasswein verkaufen", CellarParts.Pad, top + 96, CellarParts.Inner, 84, () => session.Run(bulk), ButtonKind.Secondary,
-                $"sofort +{Util.FormatEuro(Js.Round(Market.BulkPricePerHl(batch, state, player) * amount))} · keine Punkte{(state.BulkCrisisMonths > 0 ? " · Krise: halber Preis" : "")}",
+            card.With(CellarParts.Action(Lang.T("Als Fasswein verkaufen", "Sell as bulk wine"), CellarParts.Pad, top + 96, CellarParts.Inner, 84, () => session.Run(bulk), ButtonKind.Secondary,
+                Lang.En ? $"instantly +{Util.FormatEuro(Js.Round(Market.BulkPricePerHl(batch, state, player) * amount))} · no points{(state.BulkCrisisMonths > 0 ? " · crisis: half price" : "")}" : $"sofort +{Util.FormatEuro(Js.Round(Market.BulkPricePerHl(batch, state, player) * amount))} · keine Punkte{(state.BulkCrisisMonths > 0 ? " · Krise: halber Preis" : "")}",
                 session.Problem(bulk)));
 
             var sekt = new GameAction.MakeSekt(id, amount);
-            card.With(CellarParts.Action("Sekt ansetzen", CellarParts.Pad, top + 192, CellarParts.Inner, 84, () => session.Run(sekt), ButtonKind.Secondary,
-                $"{Economy.SektMonths} Monate Reife · +{Util.FormatNumber(Economy.SektQualityBonus)} Güte · kostet {Util.FormatEuro(Js.Round(bottles * Cellar.SektCost(player)))}",
+            card.With(CellarParts.Action(Lang.T("Sekt ansetzen", "Start sparkling wine"), CellarParts.Pad, top + 192, CellarParts.Inner, 84, () => session.Run(sekt), ButtonKind.Secondary,
+                Lang.En ? $"{Economy.SektMonths} months of aging · +{Util.FormatNumber(Economy.SektQualityBonus)} quality · costs {Util.FormatEuro(Js.Round(bottles * Cellar.SektCost(player)))}" : $"{Economy.SektMonths} Monate Reife · +{Util.FormatNumber(Economy.SektQualityBonus)} Güte · kostet {Util.FormatEuro(Js.Round(bottles * Cellar.SektCost(player)))}",
                 session.Problem(sekt)));
 
             var barrique = new GameAction.ToBarrique(id);
-            card.With(CellarParts.Action("Ins Barrique umlagern", CellarParts.Pad, top + 288, CellarParts.Inner, 84, () => session.Run(barrique), ButtonKind.Secondary,
-                $"ganze Charge · {Economy.BarriqueMonths} Monate im Eichenfass · +{Util.FormatNumber(Cellar.BarriqueBonus(batch))} Güte", session.Problem(barrique)));
+            card.With(CellarParts.Action(Lang.T("Ins Barrique umlagern", "Move to barrique"), CellarParts.Pad, top + 288, CellarParts.Inner, 84, () => session.Run(barrique), ButtonKind.Secondary,
+                Lang.En ? $"whole batch · {Economy.BarriqueMonths} months in oak · +{Util.FormatNumber(Cellar.BarriqueBonus(batch))} quality" : $"ganze Charge · {Economy.BarriqueMonths} Monate im Eichenfass · +{Util.FormatNumber(Cellar.BarriqueBonus(batch))} Güte", session.Problem(barrique)));
 
-            card.With(Kit.Text(fresh ? $"Jetzt möglich: {Products.FederweisserName(batch)} – unter „…“" : "Mehr unter „…“: Federweißer, Panschen",
+            card.With(Kit.Text(fresh ? (Lang.En ? $"Now possible: {Products.FederweisserName(batch)} – under “…”" : $"Jetzt möglich: {Products.FederweisserName(batch)} – unter „…“") : Lang.T("Mehr unter „…“: Federweißer, Panschen", "More under “…”: Federweißer, adulteration"),
                 CellarParts.Pad, 880, 380, 26, 17, fresh ? Theme.Wine : Theme.InkSoft, bold: fresh));
             card.With(Kit.Button("…", 436, 868, 56, 48, () => nav.Select("keller.more", "1"), ButtonKind.Ghost, fontSize: 22, align: Align.Center));
             if (fresh) card.With(Kit.Badge(1, 488, 870, 11));
@@ -234,26 +234,26 @@ internal static class CellarTanks
             var capacity = Products.FederweisserCapacity(player);
             var federHl = capacity > 0 ? Math.Min(amount, capacity) : amount;
             var feder = new GameAction.SellFederweisser(id, federHl);
-            card.With(CellarParts.Action($"{Products.FederweisserName(batch)} verkaufen", CellarParts.Pad, top, CellarParts.Inner, 84, () => session.Run(feder), ButtonKind.Primary,
-                $"{CellarParts.Hl(federHl)} · +{Util.FormatEuro(Js.Round(Products.FederweisserPricePerHl(player) * federHl))} · diesen Monat noch {CellarParts.Hl(capacity)}",
+            card.With(CellarParts.Action(Lang.En ? $"Sell {Products.FederweisserName(batch)}" : $"{Products.FederweisserName(batch)} verkaufen", CellarParts.Pad, top, CellarParts.Inner, 84, () => session.Run(feder), ButtonKind.Primary,
+                Lang.En ? $"{CellarParts.Hl(federHl)} · +{Util.FormatEuro(Js.Round(Products.FederweisserPricePerHl(player) * federHl))} · {CellarParts.Hl(capacity)} left this month" : $"{CellarParts.Hl(federHl)} · +{Util.FormatEuro(Js.Round(Products.FederweisserPricePerHl(player) * federHl))} · diesen Monat noch {CellarParts.Hl(capacity)}",
                 session.Problem(feder)));
 
-            card.With(Kit.Text("Kellertricks", CellarParts.Pad, top + 96, 200, 28, 20, Theme.Alert, bold: true));
-            card.With(Kit.Text("Fliegt es auf, wird aller gepanschte Wein beschlagnahmt – dazu Strafe, Punktabzug und ein Skandal.",
+            card.With(Kit.Text(Lang.T("Kellertricks", "Cellar tricks"), CellarParts.Pad, top + 96, 200, 28, 20, Theme.Alert, bold: true));
+            card.With(Kit.Text(Lang.T("Fliegt es auf, wird aller gepanschte Wein beschlagnahmt – dazu Strafe, Punktabzug und ein Skandal.", "If caught, all adulterated wine is confiscated – plus a fine, lost points and a scandal."),
                 CellarParts.Pad, top + 124, CellarParts.Inner, 46, 16, Theme.InkSoft, maxLines: 2));
             var y = top + 178;
             foreach (var (kind, info) in Economy.Adulteration)
             {
                 var action = new GameAction.Adulterate(id, kind);
                 var effect = new List<string>();
-                if (info.VolumeFactor != 1) effect.Add($"{(info.VolumeFactor > 1 ? "+" : "−")}{Math.Abs(Js.Round((info.VolumeFactor - 1) * 100))} % Menge");
-                if (info.QualityDelta != 0) effect.Add($"{(info.QualityDelta > 0 ? "+" : "−")}{Util.FormatNumber(Math.Abs(info.QualityDelta))} Güte");
-                if (info.LevelSteps > 0) effect.Add(info.LevelSteps == 1 ? "eine Stufe höher" : info.LevelSteps == 2 ? "zwei Stufen höher" : $"{info.LevelSteps} Stufen höher");
-                card.With(CellarParts.Action($"Panschen: {info.Name}", CellarParts.Pad, y, CellarParts.Inner, 72, () => session.Run(action), ButtonKind.Secondary,
-                    $"{string.Join(", ", effect)} · {Js.Round(info.Detection * 100)} % Risiko bei der Prüfung", session.Problem(action), 19));
+                if (info.VolumeFactor != 1) effect.Add(Lang.En ? $"{(info.VolumeFactor > 1 ? "+" : "−")}{Math.Abs(Js.Round((info.VolumeFactor - 1) * 100))} % volume" : $"{(info.VolumeFactor > 1 ? "+" : "−")}{Math.Abs(Js.Round((info.VolumeFactor - 1) * 100))} % Menge");
+                if (info.QualityDelta != 0) effect.Add($"{(info.QualityDelta > 0 ? "+" : "−")}{Util.FormatNumber(Math.Abs(info.QualityDelta))} {Lang.T("Güte", "quality")}");
+                if (info.LevelSteps > 0) effect.Add(Lang.En ? (info.LevelSteps == 1 ? "one level higher" : info.LevelSteps == 2 ? "two levels higher" : $"{info.LevelSteps} levels higher") : (info.LevelSteps == 1 ? "eine Stufe höher" : info.LevelSteps == 2 ? "zwei Stufen höher" : $"{info.LevelSteps} Stufen höher"));
+                card.With(CellarParts.Action(Lang.En ? $"Adulterate: {info.Name}" : $"Panschen: {info.Name}", CellarParts.Pad, y, CellarParts.Inner, 72, () => session.Run(action), ButtonKind.Secondary,
+                    Lang.En ? $"{string.Join(", ", effect)} · {Js.Round(info.Detection * 100)} % risk of detection at inspection" : $"{string.Join(", ", effect)} · {Js.Round(info.Detection * 100)} % Risiko bei der Prüfung", session.Problem(action), 19));
                 y += 80;
             }
-            card.With(Kit.Button("‹ Zurück zu Abfüllen & Verkauf", CellarParts.Pad, 884, CellarParts.Inner, 44, () => nav.Select("keller.more", null), ButtonKind.Ghost, fontSize: 18, align: Align.Center));
+            card.With(Kit.Button(Lang.T("‹ Zurück zu Abfüllen & Verkauf", "‹ Back to bottling & sales"), CellarParts.Pad, 884, CellarParts.Inner, 44, () => nav.Select("keller.more", null), ButtonKind.Ghost, fontSize: 18, align: Align.Center));
         }
         return card;
     }
@@ -272,7 +272,7 @@ internal static class CellarTanks
         var capacity = barrique ? player.BarriqueCapacityHl : player.TankCapacityHl;
         var used = barrique ? Rules.UsedBarriqueHl(player) : Rules.UsedTankHl(player);
 
-        CellarParts.Head(card, barrique ? "Barriquefässer" : "Edelstahltanks", barrique ? "Eichenfässer für den Ausbau" : "Mehr Platz für die Ernte");
+        CellarParts.Head(card, barrique ? Lang.T("Barriquefässer", "Barrique barrels") : Lang.T("Edelstahltanks", "Stainless steel tanks"), barrique ? Lang.T("Eichenfässer für den Ausbau", "Oak barrels for aging") : Lang.T("Mehr Platz für die Ernte", "More room for the harvest"));
         card.With(Kit.Paint(CellarParts.Pad - 6, 104, 140, 200, (c, w, h) =>
         {
             if (barrique)
@@ -288,36 +288,36 @@ internal static class CellarTanks
             }
         }));
         const double rx = 186, rw = 306;
-        card.With(Kit.Row("Vorhanden", capacity > 0 ? CellarParts.Hl(capacity) : "keins", rx, 116, rw, size: 19));
-        card.With(Kit.Row("Belegt", CellarParts.Hl(used), rx, 152, rw, size: 19));
-        card.With(Kit.Row("Frei", CellarParts.Hl(Math.Max(0, capacity - used)), rx, 188, rw, size: 19));
-        card.With(Kit.Row("Preis je hl", Util.FormatEuro(price), rx, 224, rw, size: 19));
-        card.With(Kit.Row("Konto", Util.FormatEuro(player.Money), rx, 260, rw, player.Money < hl * price ? Theme.Alert : Theme.Ink, 19));
+        card.With(Kit.Row(Lang.T("Vorhanden", "Owned"), capacity > 0 ? CellarParts.Hl(capacity) : Lang.T("keins", "none"), rx, 116, rw, size: 19));
+        card.With(Kit.Row(Lang.T("Belegt", "Used"), CellarParts.Hl(used), rx, 152, rw, size: 19));
+        card.With(Kit.Row(Lang.T("Frei", "Free"), CellarParts.Hl(Math.Max(0, capacity - used)), rx, 188, rw, size: 19));
+        card.With(Kit.Row(Lang.T("Preis je hl", "Price per hl"), Util.FormatEuro(price), rx, 224, rw, size: 19));
+        card.With(Kit.Row(Lang.T("Konto", "Balance"), Util.FormatEuro(player.Money), rx, 260, rw, player.Money < hl * price ? Theme.Alert : Theme.Ink, 19));
         card.With(CellarParts.Divider(322));
 
-        card.With(Kit.Text("Wie viel?", CellarParts.Pad, 334, CellarParts.Inner, 30, 20, Theme.Ink, bold: true));
+        card.With(Kit.Text(Lang.T("Wie viel?", "How much?"), CellarParts.Pad, 334, CellarParts.Inner, 30, 20, Theme.Ink, bold: true));
         card.With(CellarParts.Choice(CellarParts.Pad, 376, CellarParts.Inner, steps.Select(s => $"{Util.FormatNumber(s)} hl").ToArray(), index,
             i => nav.Select(key, i.ToString())));
 
         GameAction action = barrique ? new GameAction.ExpandBarrique(hl) : new GameAction.ExpandTank(hl);
-        card.With(CellarParts.Action(barrique ? "Fässer kaufen" : "Tank kaufen", CellarParts.Pad, 466, CellarParts.Inner, 84, () => session.Run(action), ButtonKind.Primary,
-            $"+{Util.FormatNumber(hl)} hl · kostet {Util.FormatEuro(hl * price)} · danach {CellarParts.Hl(capacity + hl)}", session.Problem(action)));
+        card.With(CellarParts.Action(barrique ? Lang.T("Fässer kaufen", "Buy barrels") : Lang.T("Tank kaufen", "Buy tank"), CellarParts.Pad, 466, CellarParts.Inner, 84, () => session.Run(action), ButtonKind.Primary,
+            Lang.En ? $"+{Util.FormatNumber(hl)} hl · costs {Util.FormatEuro(hl * price)} · then {CellarParts.Hl(capacity + hl)}" : $"+{Util.FormatNumber(hl)} hl · kostet {Util.FormatEuro(hl * price)} · danach {CellarParts.Hl(capacity + hl)}", session.Problem(action)));
 
         card.With(Kit.Text(barrique
-            ? $"Eichenfässer – vor allem Rotwein gewinnt an Güte (+{Util.FormatNumber(Economy.BarriqueQualityRed)}, Weißwein +{Util.FormatNumber(Economy.BarriqueQualityWhite)}). Der Wein reift {Economy.BarriqueMonths} Monate im Fass und macht so lange Platz im Tank. Nutzbar nur mit einem Kellermeister, der Barrique beherrscht."
-            : "Was bei der Lese nicht mehr in die Tanks passt, geht sofort billig an die Kellerei. Wein im Barrique belegt keinen Tank.",
+            ? (Lang.En ? $"Oak barrels – red wine gains the most quality (+{Util.FormatNumber(Economy.BarriqueQualityRed)}, white wine +{Util.FormatNumber(Economy.BarriqueQualityWhite)}). The wine ages {Economy.BarriqueMonths} months in the barrel and frees up tank space meanwhile. Usable only with a cellar master who masters barrique." : $"Eichenfässer – vor allem Rotwein gewinnt an Güte (+{Util.FormatNumber(Economy.BarriqueQualityRed)}, Weißwein +{Util.FormatNumber(Economy.BarriqueQualityWhite)}). Der Wein reift {Economy.BarriqueMonths} Monate im Fass und macht so lange Platz im Tank. Nutzbar nur mit einem Kellermeister, der Barrique beherrscht.")
+            : Lang.T("Was bei der Lese nicht mehr in die Tanks passt, geht sofort billig an die Kellerei. Wein im Barrique belegt keinen Tank.", "Whatever no longer fits into the tanks at harvest goes straight to the winery at a low price. Wine in barrique takes up no tank."),
             CellarParts.Pad, 572, CellarParts.Inner, 130, 18, Theme.InkSoft, maxLines: 5));
         if (barrique && CellarParts.MasterHint(player) is { } hint && !CellarMasters.HasSkill(player, CellarSkill.Barrique))
         {
             card.With(Kit.Text(hint, CellarParts.Pad, 706, CellarParts.Inner, 50, 17, Theme.Alert, bold: true, maxLines: 2));
         }
 
-        card.With(Kit.Button(barrique ? "Edelstahltanks ›" : "Barriquefässer ›", CellarParts.Pad, 784, CellarParts.Inner, 64,
+        card.With(Kit.Button(barrique ? Lang.T("Edelstahltanks ›", "Stainless steel tanks ›") : Lang.T("Barriquefässer ›", "Barrique barrels ›"), CellarParts.Pad, 784, CellarParts.Inner, 64,
             () => nav.Select(Area, barrique ? BuyTank : BuyBarrique), ButtonKind.Secondary,
-            barrique ? $"{Util.FormatEuro(Economy.TankCostPerHl)} je hl" : $"{Util.FormatEuro(Economy.BarriqueCostPerHl)} je hl", fontSize: 19));
+            barrique ? (Lang.En ? $"{Util.FormatEuro(Economy.TankCostPerHl)} per hl" : $"{Util.FormatEuro(Economy.TankCostPerHl)} je hl") : (Lang.En ? $"{Util.FormatEuro(Economy.BarriqueCostPerHl)} per hl" : $"{Util.FormatEuro(Economy.BarriqueCostPerHl)} je hl"), fontSize: 19));
         if (player.Cellar.Count > 0)
         {
-            card.With(Kit.Button("‹ Zurück zu den Chargen", CellarParts.Pad, 864, CellarParts.Inner, 52, () => nav.Select(Area, null), ButtonKind.Ghost, fontSize: 18, align: Align.Center));
+            card.With(Kit.Button(Lang.T("‹ Zurück zu den Chargen", "‹ Back to the batches"), CellarParts.Pad, 864, CellarParts.Inner, 52, () => nav.Select(Area, null), ButtonKind.Ghost, fontSize: 18, align: Align.Center));
         }
         return card;
     }
@@ -329,8 +329,8 @@ internal static class CellarTanks
         var player = session.Player;
         var nav = session.Nav;
         var card = CellarParts.Inspector();
-        CellarParts.Head(card, "Dein Keller", "Kein Wein im Tank");
-        card.With(Kit.Text("Gelesen wird ab August im Weinberg. Der Most kommt in die Tanks, reift dort einige Monate und wird dann abgefüllt, als Fasswein verkauft oder zu Sekt.",
+        CellarParts.Head(card, Lang.T("Dein Keller", "Your cellar"), Lang.T("Kein Wein im Tank", "No wine in the tank"));
+        card.With(Kit.Text(Lang.T("Gelesen wird ab August im Weinberg. Der Most kommt in die Tanks, reift dort einige Monate und wird dann abgefüllt, als Fasswein verkauft oder zu Sekt.", "Harvest starts in August in the vineyard. The must goes into the tanks, matures there for a few months and is then bottled, sold as bulk wine or made into sparkling wine."),
             CellarParts.Pad, 112, CellarParts.Inner, 110, 19, Theme.Ink, maxLines: 4));
         card.With(CellarParts.Divider(236));
         var competition = Market.UpcomingCompetition(state.Month);
@@ -340,22 +340,22 @@ internal static class CellarTanks
             card.With(Kit.Row(label, value, CellarParts.Pad, y, CellarParts.Inner));
             y += 40;
         }
-        Row("Edelstahltanks", CellarParts.Hl(player.TankCapacityHl));
-        Row("Barriquefässer", player.BarriqueCapacityHl > 0 ? CellarParts.Hl(player.BarriqueCapacityHl) : "keine");
-        Row("Flaschenlager", $"{Util.FormatNumber(player.Bottles.Sum(l => l.Bottles))} Fl.");
-        Row("Absatz ab Hof", $"≈ {Util.FormatNumber(Live.Demand(player))} Fl./Monat");
-        Row("Kellermeister", player.CellarMaster?.Name ?? "keiner");
-        card.With(Kit.Row($"Prämierung im {Game.MonthNames[competition.Month - 1]}", competition.Name, CellarParts.Pad, y, CellarParts.Inner, size: 18));
+        Row(Lang.T("Edelstahltanks", "Stainless steel tanks"), CellarParts.Hl(player.TankCapacityHl));
+        Row(Lang.T("Barriquefässer", "Barrique barrels"), player.BarriqueCapacityHl > 0 ? CellarParts.Hl(player.BarriqueCapacityHl) : Lang.T("keine", "none"));
+        Row(Lang.T("Flaschenlager", "Bottle stock"), $"{Util.FormatNumber(player.Bottles.Sum(l => l.Bottles))} {Lang.T("Fl.", "btl.")}");
+        Row(Lang.T("Absatz ab Hof", "Cellar-door sales"), $"≈ {Util.FormatNumber(Live.Demand(player))} {Lang.T("Fl./Monat", "btl./month")}");
+        Row(Lang.T("Kellermeister", "Cellar master"), player.CellarMaster?.Name ?? Lang.T("keiner", "none"));
+        card.With(Kit.Row(Lang.En ? $"Wine award in {Game.MonthNames[competition.Month - 1]}" : $"Prämierung im {Game.MonthNames[competition.Month - 1]}", competition.Name, CellarParts.Pad, y, CellarParts.Inner, size: 18));
 
-        card.With(Kit.Button("Zum Weinberg ›", CellarParts.Pad, 560, CellarParts.Inner, 84, () => nav.Go(Scene.Weinberg, 0), ButtonKind.Primary,
-            "Reben pflegen und im Herbst lesen"));
-        card.With(Kit.Button("Tank kaufen ›", CellarParts.Pad, 656, CellarParts.Inner, 84, () => nav.Select(Area, BuyTank), ButtonKind.Secondary,
-            $"mehr Platz für die Ernte · {Util.FormatEuro(Economy.TankCostPerHl)} je hl"));
-        card.With(Kit.Button("Barriquefässer kaufen ›", CellarParts.Pad, 752, CellarParts.Inner, 84, () => nav.Select(Area, BuyBarrique), ButtonKind.Secondary,
-            $"mehr Güte, vor allem für Rotwein · {Util.FormatEuro(Economy.BarriqueCostPerHl)} je hl"));
+        card.With(Kit.Button(Lang.T("Zum Weinberg ›", "To the vineyard ›"), CellarParts.Pad, 560, CellarParts.Inner, 84, () => nav.Go(Scene.Weinberg, 0), ButtonKind.Primary,
+            Lang.T("Reben pflegen und im Herbst lesen", "Tend the vines and harvest in autumn")));
+        card.With(Kit.Button(Lang.T("Tank kaufen ›", "Buy tank ›"), CellarParts.Pad, 656, CellarParts.Inner, 84, () => nav.Select(Area, BuyTank), ButtonKind.Secondary,
+            Lang.En ? $"more room for the harvest · {Util.FormatEuro(Economy.TankCostPerHl)} per hl" : $"mehr Platz für die Ernte · {Util.FormatEuro(Economy.TankCostPerHl)} je hl"));
+        card.With(Kit.Button(Lang.T("Barriquefässer kaufen ›", "Buy barrique barrels ›"), CellarParts.Pad, 752, CellarParts.Inner, 84, () => nav.Select(Area, BuyBarrique), ButtonKind.Secondary,
+            Lang.En ? $"more quality, especially for red wine · {Util.FormatEuro(Economy.BarriqueCostPerHl)} per hl" : $"mehr Güte, vor allem für Rotwein · {Util.FormatEuro(Economy.BarriqueCostPerHl)} je hl"));
         if (player.Bottles.Count > 0)
         {
-            card.With(Kit.Button("Zum Flaschenlager ›", CellarParts.Pad, 864, CellarParts.Inner, 52, () => nav.SetTab(1), ButtonKind.Ghost, fontSize: 18, align: Align.Center));
+            card.With(Kit.Button(Lang.T("Zum Flaschenlager ›", "To the bottle stock ›"), CellarParts.Pad, 864, CellarParts.Inner, 52, () => nav.SetTab(1), ButtonKind.Ghost, fontSize: 18, align: Align.Center));
         }
         return card;
     }

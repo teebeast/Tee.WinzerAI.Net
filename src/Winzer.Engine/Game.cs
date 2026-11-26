@@ -14,11 +14,19 @@ public static class Game
     /// <summary>Anteil der möglichen Menge je nach Lesemonat</summary>
     static readonly Dictionary<int, double> HarvestTiming = new() { [8] = 0.7, [9] = 0.9, [10] = 1, [11] = 1, [12] = 1 };
 
-    public static readonly string[] MonthNames =
+    static readonly string[] MonthNamesDe =
     [
         "Januar", "Februar", "März", "April", "Mai", "Juni",
         "Juli", "August", "September", "Oktober", "November", "Dezember",
     ];
+
+    static readonly string[] MonthNamesEn =
+    [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December",
+    ];
+
+    public static string[] MonthNames => Lang.En ? MonthNamesEn : MonthNamesDe;
 
     /// <summary>Number.isInteger</summary>
     static bool IsInteger(double value) => double.IsFinite(value) && Math.Floor(value) == value;
@@ -122,10 +130,10 @@ public static class Game
             state,
             null,
             state.YearLimit is not (null or 0)
-                ? $"Jahr 1 beginnt. Wer nach {state.YearLimit} Jahren die meisten Punkte hat, gewinnt."
+                ? (Lang.En ? $"Year 1 begins. Whoever has the most points after {state.YearLimit} years wins." : $"Jahr 1 beginnt. Wer nach {state.YearLimit} Jahren die meisten Punkte hat, gewinnt.")
                 : Rules.IsEndless(state)
-                    ? "Jahr 1 beginnt. Endlosspiel: kein Punkteziel, kein Zeitlimit – baue dein Weingut in Ruhe aus."
-                    : $"Jahr 1 beginnt. Ziel: {Util.JsNumber(state.TargetPoints)} Punkte.");
+                    ? Lang.T("Jahr 1 beginnt. Endlosspiel: kein Punkteziel, kein Zeitlimit – baue dein Weingut in Ruhe aus.", "Year 1 begins. Endless game: no point goal, no time limit – build up your estate at your own pace.")
+                    : (Lang.En ? $"Year 1 begins. Goal: {Util.JsNumber(state.TargetPoints)} points." : $"Jahr 1 beginnt. Ziel: {Util.JsNumber(state.TargetPoints)} Punkte."));
         state.RulesVersion = options.RulesVersion ?? 1;
         if (RulesV2.On(state)) RulesV2.StartGame(state);
         return state;
@@ -187,7 +195,7 @@ public static class Game
     /// <summary>Liefert eine Fehlermeldung, wenn die Aktion gerade nicht erlaubt ist, sonst null.</summary>
     public static string? ValidateAction(GameState state, GameAction action)
     {
-        if (!string.IsNullOrEmpty(state.WinnerId) || state.Finished) return "Das Spiel ist beendet.";
+        if (!string.IsNullOrEmpty(state.WinnerId) || state.Finished) return Lang.T("Das Spiel ist beendet.", "The game is over.");
         var player = Rules.CurrentPlayer(state);
         WineBatch? FindBatch(string id) => player.Cellar.Find(b => b.Id == id);
         BottleLot? FindLot(string id) => player.Bottles.Find(l => l.Id == id);
@@ -197,31 +205,31 @@ public static class Game
             case GameAction.Plant a:
             {
                 var plot = player.Plots.Find(p => p.Id == a.PlotId);
-                if (plot is null) return "Unbekannte Parzelle.";
+                if (plot is null) return Lang.T("Unbekannte Parzelle.", "Unknown plot.");
                 if (plot.ForAuction) return RulesV2.OfferedText;
-                if (!Rules.PlantMonths.Contains(state.Month)) return "Gepflanzt wird nur im März und April.";
-                if (plot.Grape is not null) return "Die Parzelle ist bereits bestockt.";
+                if (!Rules.PlantMonths.Contains(state.Month)) return Lang.T("Gepflanzt wird nur im März und April.", "Planting is only possible in March and April.");
+                if (plot.Grape is not null) return Lang.T("Die Parzelle ist bereits bestockt.", "The plot is already planted.");
                 var cost = Grapes.All[a.Grape].PlantCostPerHa * plot.Hectares;
-                if (player.Money < cost) return $"Nicht genug Geld (benötigt {Util.FormatEuro(cost)}).";
+                if (player.Money < cost) return (Lang.En ? $"Not enough money (need {Util.FormatEuro(cost)})." : $"Nicht genug Geld (benötigt {Util.FormatEuro(cost)}).");
                 return null;
             }
             case GameAction.Harvest a:
             {
                 var plot = player.Plots.Find(p => p.Id == a.PlotId);
-                if (plot is null) return "Unbekannte Parzelle.";
-                if (!Rules.HarvestMonths.Contains(state.Month)) return "Gelesen wird von August bis Dezember.";
-                if (plot.Grape is null) return "Die Parzelle ist nicht bestockt.";
-                if (plot.HarvestedThisYear) return "Die Parzelle ist in diesem Jahr schon gelesen.";
+                if (plot is null) return Lang.T("Unbekannte Parzelle.", "Unknown plot.");
+                if (!Rules.HarvestMonths.Contains(state.Month)) return Lang.T("Gelesen wird von August bis Dezember.", "Harvest runs from August to December.");
+                if (plot.Grape is null) return Lang.T("Die Parzelle ist nicht bestockt.", "The plot is not planted.");
+                if (plot.HarvestedThisYear) return Lang.T("Die Parzelle ist in diesem Jahr schon gelesen.", "The plot has already been harvested this year.");
                 // Kein Geldcheck: Die Saisonkräfte werden aus dem Erlös bezahlt, notfalls im Dispo.
-                if (Rules.PlotAgeFactor(plot, state.Year) == 0) return "Die Reben sind noch zu jung.";
-                if (a.Rose && Grapes.All[plot.Grape.Value].Color != GrapeColor.Rot) return "Rosé gibt es nur aus roten Trauben.";
+                if (Rules.PlotAgeFactor(plot, state.Year) == 0) return Lang.T("Die Reben sind noch zu jung.", "The vines are still too young.");
+                if (a.Rose && Grapes.All[plot.Grape.Value].Color != GrapeColor.Rot) return Lang.T("Rosé gibt es nur aus roten Trauben.", "Rosé can only be made from red grapes.");
                 return null;
             }
             case GameAction.SellBulk a:
             {
                 var batch = FindBatch(a.BatchId);
-                if (batch is null) return "Unbekannte Charge.";
-                if (!(a.Hectoliters > 0) || a.Hectoliters > batch.Hectoliters) return "Ungültige Menge.";
+                if (batch is null) return Lang.T("Unbekannte Charge.", "Unknown batch.");
+                if (!(a.Hectoliters > 0) || a.Hectoliters > batch.Hectoliters) return Lang.T("Ungültige Menge.", "Invalid amount.");
                 return null;
             }
             case GameAction.Bottle a:
@@ -231,61 +239,61 @@ public static class Game
             case GameAction.Register a:
             {
                 var lot = FindLot(a.LotId);
-                if (lot is null) return "Unbekannter Flaschenposten.";
-                if (lot.Registered) return "Der Wein ist bereits geprüft.";
-                if (lot.MonthsUntilReady > 0) return "Der Sekt reift noch.";
-                if (lot.Level == QualityLevel.DeutscherWein && !lot.Sparkling) return "Deutscher Wein braucht keine Prüfung.";
-                if (lot.Bottles < Economy.RegisterMinBottles) return $"Mindestens {Util.JsNumber(Economy.RegisterMinBottles)} Flaschen (5 hl) für eine Prüfung.";
-                if (player.Money < Economy.RegisterFee) return "Nicht genug Geld für die Prüfgebühr.";
+                if (lot is null) return Lang.T("Unbekannter Flaschenposten.", "Unknown bottle lot.");
+                if (lot.Registered) return Lang.T("Der Wein ist bereits geprüft.", "The wine has already been tested.");
+                if (lot.MonthsUntilReady > 0) return Lang.T("Der Sekt reift noch.", "The sparkling wine is still maturing.");
+                if (lot.Level == QualityLevel.DeutscherWein && !lot.Sparkling) return Lang.T("Deutscher Wein braucht keine Prüfung.", "German wine needs no testing.");
+                if (lot.Bottles < Economy.RegisterMinBottles) return (Lang.En ? $"At least {Util.JsNumber(Economy.RegisterMinBottles)} bottles (5 hl) needed for testing." : $"Mindestens {Util.JsNumber(Economy.RegisterMinBottles)} Flaschen (5 hl) für eine Prüfung.");
+                if (player.Money < Economy.RegisterFee) return Lang.T("Nicht genug Geld für die Prüfgebühr.", "Not enough money for the testing fee.");
                 return null;
             }
             case GameAction.SellWholesale a:
             {
                 var lot = FindLot(a.LotId);
-                if (lot is null) return "Unbekannter Flaschenposten.";
-                if (!lot.Registered) return "Der Großhandel nimmt nur amtlich geprüfte Weine.";
+                if (lot is null) return Lang.T("Unbekannter Flaschenposten.", "Unknown bottle lot.");
+                if (!lot.Registered) return Lang.T("Der Großhandel nimmt nur amtlich geprüfte Weine.", "Wholesale only takes officially tested wines.");
                 if (!IsInteger(a.Bottles) || a.Bottles <= 0 || a.Bottles > lot.Bottles)
                 {
-                    return "Ungültige Menge.";
+                    return Lang.T("Ungültige Menge.", "Invalid amount.");
                 }
                 return null;
             }
             case GameAction.EnterCompetition a:
             {
                 var lot = FindLot(a.LotId);
-                if (lot is null) return "Unbekannter Flaschenposten.";
+                if (lot is null) return Lang.T("Unbekannter Flaschenposten.", "Unknown bottle lot.");
                 return Market.CompetitionEntryProblem(player, lot, Market.UpcomingCompetition(state.Month));
             }
             case GameAction.Marketing a:
             {
                 var info = Economy.Marketing[a.Kind];
-                if (!info.Months.Contains(state.Month)) return $"{info.Name} ist in diesem Monat nicht möglich.";
-                if (player.MarketingThisMonth.Contains(a.Kind)) return $"{info.Name} ist für diesen Monat schon gebucht.";
-                if (player.Money < info.Cost) return $"Nicht genug Geld (benötigt {Util.FormatEuro(info.Cost)}).";
+                if (!info.Months.Contains(state.Month)) return (Lang.En ? $"{info.Name} is not possible this month." : $"{info.Name} ist in diesem Monat nicht möglich.");
+                if (player.MarketingThisMonth.Contains(a.Kind)) return (Lang.En ? $"{info.Name} is already booked for this month." : $"{info.Name} ist für diesen Monat schon gebucht.");
+                if (player.Money < info.Cost) return (Lang.En ? $"Not enough money (need {Util.FormatEuro(info.Cost)})." : $"Nicht genug Geld (benötigt {Util.FormatEuro(info.Cost)}).");
                 return null;
             }
             case GameAction.ExpandTank a:
             {
-                if (!IsInteger(a.Hectoliters) || a.Hectoliters <= 0) return "Ungültige Menge.";
+                if (!IsInteger(a.Hectoliters) || a.Hectoliters <= 0) return Lang.T("Ungültige Menge.", "Invalid amount.");
                 var cost = a.Hectoliters * Economy.TankCostPerHl;
-                if (player.Money < cost) return $"Nicht genug Geld (benötigt {Util.FormatEuro(cost)}).";
+                if (player.Money < cost) return (Lang.En ? $"Not enough money (need {Util.FormatEuro(cost)})." : $"Nicht genug Geld (benötigt {Util.FormatEuro(cost)}).");
                 return null;
             }
             case GameAction.BuyOnlineShop:
-                if (player.HasOnlineShop) return "Der Online-Shop läuft bereits.";
-                if (player.Money < Economy.OnlineShopCost) return $"Nicht genug Geld (benötigt {Util.FormatEuro(Economy.OnlineShopCost)}).";
+                if (player.HasOnlineShop) return Lang.T("Der Online-Shop läuft bereits.", "The online shop is already running.");
+                if (player.Money < Economy.OnlineShopCost) return (Lang.En ? $"Not enough money (need {Util.FormatEuro(Economy.OnlineShopCost)})." : $"Nicht genug Geld (benötigt {Util.FormatEuro(Economy.OnlineShopCost)}).");
                 return null;
             case GameAction.HireCellarMaster a:
                 return CellarMasters.ValidateHire(state, player, a.Candidate);
             case GameAction.FireCellarMaster:
-                return player.CellarMaster is not null ? null : "Es ist kein Kellermeister angestellt.";
+                return player.CellarMaster is not null ? null : Lang.T("Es ist kein Kellermeister angestellt.", "No cellar master is employed.");
             case GameAction.Borrow a:
-                if (!IsInteger(a.Amount) || a.Amount <= 0) return "Ungültiger Betrag.";
-                if (a.Amount > Market.AvailableCredit(player)) return $"Kreditrahmen reicht nur für {Util.FormatEuro(Market.AvailableCredit(player))}.";
+                if (!IsInteger(a.Amount) || a.Amount <= 0) return Lang.T("Ungültiger Betrag.", "Invalid amount.");
+                if (a.Amount > Market.AvailableCredit(player)) return (Lang.En ? $"Credit line only covers {Util.FormatEuro(Market.AvailableCredit(player))}." : $"Kreditrahmen reicht nur für {Util.FormatEuro(Market.AvailableCredit(player))}.");
                 return null;
             case GameAction.Repay a:
-                if (!IsInteger(a.Amount) || a.Amount <= 0 || a.Amount > player.Loan) return "Ungültiger Betrag.";
-                if (a.Amount > player.Money) return "Nicht genug Geld auf dem Konto.";
+                if (!IsInteger(a.Amount) || a.Amount <= 0 || a.Amount > player.Loan) return Lang.T("Ungültiger Betrag.", "Invalid amount.");
+                if (a.Amount > player.Money) return Lang.T("Nicht genug Geld auf dem Konto.", "Not enough money in the account.");
                 return null;
             case GameAction.AuctionLimit a:
                 return Auction.ValidateAuctionLimit(state, player, a.LotId, a.Amount);
@@ -318,20 +326,20 @@ public static class Game
             case GameAction.SellPlot a:
             {
                 var plot = player.Plots.Find(p => p.Id == a.PlotId);
-                if (plot is null) return "Unbekannte Parzelle.";
+                if (plot is null) return Lang.T("Unbekannte Parzelle.", "Unknown plot.");
                 if (plot.ForAuction) return RulesV2.OfferedText;
                 // Zur Versteigerung angemeldete Parzellen zählen schon als weg
-                if (player.Plots.Count(p => !p.ForAuction) <= 1) return "Die letzte Parzelle kann nicht verkauft werden.";
+                if (player.Plots.Count(p => !p.ForAuction) <= 1) return Lang.T("Die letzte Parzelle kann nicht verkauft werden.", "The last plot cannot be sold.");
                 return null;
             }
             case GameAction.ClearPlot a:
             {
                 var plot = player.Plots.Find(p => p.Id == a.PlotId);
-                if (plot is null) return "Unbekannte Parzelle.";
+                if (plot is null) return Lang.T("Unbekannte Parzelle.", "Unknown plot.");
                 if (plot.ForAuction) return RulesV2.OfferedText;
-                if (plot.Grape is null) return "Die Parzelle liegt bereits brach.";
+                if (plot.Grape is null) return Lang.T("Die Parzelle liegt bereits brach.", "The plot is already fallow.");
                 var cost = plot.Hectares * Economy.ClearingCostPerHa;
-                if (player.Money < cost) return $"Nicht genug Geld (benötigt {Util.FormatEuro(cost)}).";
+                if (player.Money < cost) return (Lang.En ? $"Not enough money (need {Util.FormatEuro(cost)})." : $"Nicht genug Geld (benötigt {Util.FormatEuro(cost)}).");
                 return null;
             }
             case GameAction.SetProtection a:
@@ -349,13 +357,13 @@ public static class Game
             case GameAction.ToBarrique a:
                 return Cellar.ValidateToBarrique(player, a.BatchId);
             case GameAction.BuildVinothek:
-                if (player.HasVinothek) return "Die Vinothek steht bereits.";
-                if (player.Money < Economy.VinothekCost) return $"Nicht genug Geld (benötigt {Util.FormatEuro(Economy.VinothekCost)}).";
+                if (player.HasVinothek) return Lang.T("Die Vinothek steht bereits.", "The wine room is already built.");
+                if (player.Money < Economy.VinothekCost) return (Lang.En ? $"Not enough money (need {Util.FormatEuro(Economy.VinothekCost)})." : $"Nicht genug Geld (benötigt {Util.FormatEuro(Economy.VinothekCost)}).");
                 return null;
             case GameAction.EndTurn:
                 return null;
             case GameAction.AutoSkipTurn:
-                return player.Ai is not null ? "Computergegner spulen nicht vor." : null;
+                return player.Ai is not null ? Lang.T("Computergegner spulen nicht vor.", "Computer winemakers don't fast-forward.") : null;
             case GameAction.SetPriceLevel or GameAction.ChooseGoal or GameAction.ChooseAmbition or GameAction.Construct or GameAction.Donate
                 or GameAction.OfferPlot or GameAction.WithdrawPlot:
                 return RulesV2.Validate(state, player, action);
@@ -385,7 +393,7 @@ public static class Game
                 player.Money -= grape.PlantCostPerHa * plot.Hectares;
                 plot.Grape = grape.Id;
                 plot.PlantedYear = next.Year;
-                Util.AddLog(next, player.Id, $"{plot.Name}: {Util.JsNumber(plot.Hectares)} ha {grape.Name} gepflanzt.");
+                Util.AddLog(next, player.Id, (Lang.En ? $"{plot.Name}: planted {Util.JsNumber(plot.Hectares)} ha of {grape.Name}." : $"{plot.Name}: {Util.JsNumber(plot.Hectares)} ha {grape.Name} gepflanzt."));
                 break;
             }
             case GameAction.Harvest a:
@@ -397,7 +405,7 @@ public static class Game
                 var revenue = Js.Round(Market.BulkPricePerHl(batch, next, player) * a.Hectoliters);
                 player.Money += revenue;
                 Rules.RemoveBatchVolume(player, batch, a.Hectoliters);
-                Util.AddLog(next, player.Id, $"{Util.JsNumber(a.Hectoliters)} hl {Rules.WineLabel(batch)} als Fasswein verkauft: +{Util.FormatEuro(revenue)}.");
+                Util.AddLog(next, player.Id, (Lang.En ? $"Sold {Util.JsNumber(a.Hectoliters)} hl {Rules.WineLabel(batch)} as bulk wine: +{Util.FormatEuro(revenue)}." : $"{Util.JsNumber(a.Hectoliters)} hl {Rules.WineLabel(batch)} als Fasswein verkauft: +{Util.FormatEuro(revenue)}."));
                 break;
             }
             case GameAction.Bottle a:
@@ -414,7 +422,7 @@ public static class Game
                 var points = Market.RegistrationPoints(lot);
                 player.Points += points;
                 lot.Registered = true;
-                Util.AddLog(next, player.Id, $"{Rules.WineLabel(lot)} hat die amtliche Prüfung bestanden: +{Util.JsNumber(points)} Punkte.");
+                Util.AddLog(next, player.Id, (Lang.En ? $"{Rules.WineLabel(lot)} passed the official test: +{Util.JsNumber(points)} points." : $"{Rules.WineLabel(lot)} hat die amtliche Prüfung bestanden: +{Util.JsNumber(points)} Punkte."));
                 CheckWinner(next);
                 break;
             }
@@ -426,7 +434,7 @@ public static class Game
                 player.WholesaleThisYear += a.Bottles;
                 player.Stats.BottlesSold += a.Bottles;
                 Rules.RemoveBottles(player, lot, a.Bottles);
-                Util.AddLog(next, player.Id, $"{Util.JsNumber(a.Bottles)} Fl. {Rules.WineLabel(lot)} an den Großhandel: +{Util.FormatEuro(revenue)}.");
+                Util.AddLog(next, player.Id, (Lang.En ? $"{Util.JsNumber(a.Bottles)} btl. {Rules.WineLabel(lot)} sold to wholesale: +{Util.FormatEuro(revenue)}." : $"{Util.JsNumber(a.Bottles)} Fl. {Rules.WineLabel(lot)} an den Großhandel: +{Util.FormatEuro(revenue)}."));
                 break;
             }
             case GameAction.EnterCompetition a:
@@ -434,7 +442,7 @@ public static class Game
                 var competition = Market.UpcomingCompetition(next.Month);
                 player.Money -= competition.Fee;
                 player.CompetitionEntries.Add(a.LotId);
-                Util.AddLog(next, player.Id, $"{Rules.WineLabel(LotOf(a.LotId))} zur {competition.Name} angemeldet.");
+                Util.AddLog(next, player.Id, (Lang.En ? $"{Rules.WineLabel(LotOf(a.LotId))} entered in the {competition.Name}." : $"{Rules.WineLabel(LotOf(a.LotId))} zur {competition.Name} angemeldet."));
                 break;
             }
             case GameAction.Marketing a:
@@ -443,18 +451,18 @@ public static class Game
                 player.Money -= info.Cost;
                 player.MarketingThisMonth.Add(a.Kind);
                 var gain = Rules.ChangeReputation(player, info.Reputation);
-                Util.AddLog(next, player.Id, $"{info.Name}: Bekanntheit +{gain.ToString("F1", CultureInfo.InvariantCulture)}.");
+                Util.AddLog(next, player.Id, (Lang.En ? $"{info.Name}: reputation +{gain.ToString("F1", CultureInfo.InvariantCulture)}." : $"{info.Name}: Bekanntheit +{gain.ToString("F1", CultureInfo.InvariantCulture)}."));
                 break;
             }
             case GameAction.ExpandTank a:
                 player.Money -= a.Hectoliters * Economy.TankCostPerHl;
                 player.TankCapacityHl += a.Hectoliters;
-                Util.AddLog(next, player.Id, $"Tanklager um {Util.JsNumber(a.Hectoliters)} hl erweitert.");
+                Util.AddLog(next, player.Id, (Lang.En ? $"Tank storage expanded by {Util.JsNumber(a.Hectoliters)} hl." : $"Tanklager um {Util.JsNumber(a.Hectoliters)} hl erweitert."));
                 break;
             case GameAction.BuyOnlineShop:
                 player.Money -= Economy.OnlineShopCost;
                 player.HasOnlineShop = true;
-                Util.AddLog(next, player.Id, "Der Online-Shop ist eröffnet.");
+                Util.AddLog(next, player.Id, Lang.T("Der Online-Shop ist eröffnet.", "The online shop is open."));
                 break;
             case GameAction.HireCellarMaster a:
                 CellarMasters.Hire(next, player, a.Candidate);
@@ -465,12 +473,12 @@ public static class Game
             case GameAction.Borrow a:
                 player.Loan += a.Amount;
                 player.Money += a.Amount;
-                Util.AddLog(next, player.Id, $"Kredit über {Util.FormatEuro(a.Amount)} aufgenommen.");
+                Util.AddLog(next, player.Id, (Lang.En ? $"Took out a loan of {Util.FormatEuro(a.Amount)}." : $"Kredit über {Util.FormatEuro(a.Amount)} aufgenommen."));
                 break;
             case GameAction.Repay a:
                 player.Loan -= a.Amount;
                 player.Money -= a.Amount;
-                Util.AddLog(next, player.Id, $"{Util.FormatEuro(a.Amount)} Kredit getilgt.");
+                Util.AddLog(next, player.Id, (Lang.En ? $"Repaid {Util.FormatEuro(a.Amount)} of the loan." : $"{Util.FormatEuro(a.Amount)} Kredit getilgt."));
                 break;
             case GameAction.AuctionLimit a:
                 Auction.SetAuctionLimit(next, player, a.LotId, a.Amount);
@@ -522,7 +530,7 @@ public static class Game
                 var price = PlotSalePrice(player, plot, next.Year);
                 player.Money += price;
                 player.Plots = player.Plots.Where(p => p.Id != plot.Id).ToList();
-                Util.AddLog(next, player.Id, $"{plot.Name} ({Util.JsNumber(plot.Hectares)} ha) für {Util.FormatEuro(price)} verkauft.");
+                Util.AddLog(next, player.Id, (Lang.En ? $"Sold {plot.Name} ({Util.JsNumber(plot.Hectares)} ha) for {Util.FormatEuro(price)}." : $"{plot.Name} ({Util.JsNumber(plot.Hectares)} ha) für {Util.FormatEuro(price)} verkauft."));
                 break;
             }
             case GameAction.ClearPlot a:
@@ -544,8 +552,8 @@ public static class Game
                     next,
                     player.Ai is not null ? null : player.Id,
                     player.Ai is not null
-                        ? $"{player.Name} rodet {grape} in der Lage {plot.Name} und pflanzt im Frühjahr neu."
-                        : $"{plot.Name}: {grape} gerodet ({Util.FormatEuro(cost)}). Neu gepflanzt wird im März oder April.");
+                        ? (Lang.En ? $"{player.Name} is clearing {grape} in {plot.Name} and will replant in spring." : $"{player.Name} rodet {grape} in der Lage {plot.Name} und pflanzt im Frühjahr neu.")
+                        : (Lang.En ? $"{plot.Name}: {grape} cleared ({Util.FormatEuro(cost)}). Replanting is possible in March or April." : $"{plot.Name}: {grape} gerodet ({Util.FormatEuro(cost)}). Neu gepflanzt wird im März oder April."));
                 break;
             }
             case GameAction.SetProtection a:
@@ -559,8 +567,8 @@ public static class Game
                     next,
                     player.Id,
                     a.Gamble
-                        ? $"{plot.Name}: Die Trauben bleiben für Eiswein hängen. Jetzt braucht es Frost."
-                        : $"{plot.Name}: Doch kein Eiswein – die Trauben können normal gelesen werden.");
+                        ? (Lang.En ? $"{plot.Name}: The grapes stay on the vine for ice wine. Now it needs frost." : $"{plot.Name}: Die Trauben bleiben für Eiswein hängen. Jetzt braucht es Frost.")
+                        : (Lang.En ? $"{plot.Name}: No ice wine after all – the grapes can be harvested normally." : $"{plot.Name}: Doch kein Eiswein – die Trauben können normal gelesen werden."));
                 break;
             }
             case GameAction.Adulterate a:
@@ -584,7 +592,7 @@ public static class Game
                 player.Money -= Economy.VinothekCost;
                 player.HasVinothek = true;
                 Rules.ChangeReputation(player, Economy.VinothekReputation);
-                Util.AddLog(next, null, $"{player.Name} eröffnet eine Vinothek mit Probierstube.");
+                Util.AddLog(next, null, (Lang.En ? $"{player.Name} opens a wine room for tastings." : $"{player.Name} eröffnet eine Vinothek mit Probierstube."));
                 break;
             case GameAction.SetPriceLevel or GameAction.ChooseGoal or GameAction.ChooseAmbition or GameAction.Construct or GameAction.Donate
                 or GameAction.OfferPlot or GameAction.WithdrawPlot:
@@ -615,8 +623,11 @@ public static class Game
         Util.AddLog(
             state,
             player.Id,
-            $"{plot.Name}: {Util.JsNumber(preview.Hectoliters)} hl {Grapes.All[plot.Grape!.Value].Name}{(rose ? " für Rosé" : "")} gelesen, {Util.JsNumber(Js.Round(plot.Oechsle))} °Oe, " +
-            $"{Quality.QualityInfo(preview.Level).Name}, Güte {Util.JsNumber(preview.Quality)}.");
+            Lang.En
+                ? $"{plot.Name}: harvested {Util.JsNumber(preview.Hectoliters)} hl {Grapes.All[plot.Grape!.Value].Name}{(rose ? " for Rosé" : "")}, {Util.JsNumber(Js.Round(plot.Oechsle))} °Oe, " +
+                  $"{Quality.QualityInfo(preview.Level).Name}, quality {Util.JsNumber(preview.Quality)}."
+                : $"{plot.Name}: {Util.JsNumber(preview.Hectoliters)} hl {Grapes.All[plot.Grape!.Value].Name}{(rose ? " für Rosé" : "")} gelesen, {Util.JsNumber(Js.Round(plot.Oechsle))} °Oe, " +
+                  $"{Quality.QualityInfo(preview.Level).Name}, Güte {Util.JsNumber(preview.Quality)}.");
         Rules.StoreWine(state, player, new WineBatch
         {
             Grape = plot.Grape!.Value,
@@ -668,7 +679,7 @@ public static class Game
         if (active.Count == 0)
         {
             state.Finished = true;
-            Util.AddLog(state, null, "Alle Weingüter sind insolvent. Das Spiel ist vorbei.");
+            Util.AddLog(state, null, Lang.T("Alle Weingüter sind insolvent. Das Spiel ist vorbei.", "All estates are insolvent. The game is over."));
         }
         else
         {
@@ -684,7 +695,7 @@ public static class Game
         var weather = Weather.DrawWeather(state.Rng, state.Forecast);
         state.LastWeather = weather;
         if (v2 && state.Month is >= 8 and <= 11) state.RipeningWeather.Add(weather);
-        Util.AddLog(state, null, $"Wetter im {MonthNames[state.Month - 1]}: {Weather.WeatherLabels[weather]}.");
+        Util.AddLog(state, null, (Lang.En ? $"Weather in {MonthNames[state.Month - 1]}: {Weather.WeatherLabels[weather]}." : $"Wetter im {MonthNames[state.Month - 1]}: {Weather.WeatherLabels[weather]}."));
 
         var competition = Economy.Competitions.Values.FirstOrDefault(c => c.Month == state.Month);
         if (state.Auction?.Phase == AuctionPhase.Live) Auction.FinishAuction(state);
@@ -760,7 +771,7 @@ public static class Game
                 FinishByTime(state);
                 return;
             }
-            Util.AddLog(state, null, $"Jahr {state.Year} beginnt.");
+            Util.AddLog(state, null, (Lang.En ? $"Year {state.Year} begins." : $"Jahr {state.Year} beginnt."));
             CellarMasters.RefreshCandidates(state);
             foreach (var player in state.Players) if (!player.Bankrupt) Bio.ChargeBioFees(state, player);
             if (v2) RulesV2.StartYear(state);
@@ -808,7 +819,7 @@ public static class Game
         {
             var net = Js.Round(revenue * (1 - Economy.DirectSalesCostShare));
             player.Money += net;
-            Util.AddLog(state, player.Id, $"Ab Hof{(player.HasOnlineShop ? " und online" : "")} {Util.JsNumber(sold)} Flaschen verkauft: +{Util.FormatEuro(net)} (nach Vertriebskosten).");
+            Util.AddLog(state, player.Id, (Lang.En ? $"Cellar door{(player.HasOnlineShop ? " and online" : "")}: sold {Util.JsNumber(sold)} bottles: +{Util.FormatEuro(net)} (after distribution costs)." : $"Ab Hof{(player.HasOnlineShop ? " und online" : "")} {Util.JsNumber(sold)} Flaschen verkauft: +{Util.FormatEuro(net)} (nach Vertriebskosten)."));
         }
     }
 
@@ -835,7 +846,7 @@ public static class Game
             }
             if (found is not { } medal)
             {
-                Util.AddLog(state, player.Id, $"{competition.Name}: {Rules.WineLabel(lot)} geht leer aus.");
+                Util.AddLog(state, player.Id, (Lang.En ? $"{competition.Name}: {Rules.WineLabel(lot)} goes home empty-handed." : $"{competition.Name}: {Rules.WineLabel(lot)} geht leer aus."));
                 continue;
             }
             lot.Awards.Add(new Award { Competition = competition.Id, Year = state.Year, Medal = medal });
@@ -853,7 +864,7 @@ public static class Game
             Util.AddLog(
                 state,
                 null,
-                $"{competition.Name}: {Economy.MedalNames[medal]} für {player.Name} – {Rules.WineLabel(lot)}! +{Util.JsNumber(competition.Points[medal])} Punkte.");
+                (Lang.En ? $"{competition.Name}: {Economy.MedalNames[medal]} for {player.Name} – {Rules.WineLabel(lot)}! +{Util.JsNumber(competition.Points[medal])} points." : $"{competition.Name}: {Economy.MedalNames[medal]} für {player.Name} – {Rules.WineLabel(lot)}! +{Util.JsNumber(competition.Points[medal])} Punkte."));
         }
         player.CompetitionEntries = [];
     }
@@ -861,7 +872,7 @@ public static class Game
     static void PayMonthlyCosts(GameState state, Player player)
     {
         player.Money -= Market.MonthlyCosts(player, state.Month).Total;
-        if (player.Money < 0) Util.AddLog(state, player.Id, $"Konto im Minus: {Util.FormatEuro(player.Money)}!");
+        if (player.Money < 0) Util.AddLog(state, player.Id, (Lang.En ? $"Account overdrawn: {Util.FormatEuro(player.Money)}!" : $"Konto im Minus: {Util.FormatEuro(player.Money)}!"));
     }
 
     static void CheckInsolvency(GameState state, Player player)
@@ -876,12 +887,12 @@ public static class Game
                 player.CompetitionEntries = [];
                 player.ExportContract = null;
                 player.ExportOffer = null;
-                Util.AddLog(state, null, $"{player.Name} ist insolvent und scheidet aus.");
+                Util.AddLog(state, null, (Lang.En ? $"{player.Name} is insolvent and drops out." : $"{player.Name} ist insolvent und scheidet aus."));
             }
             else
             {
                 var left = Economy.InsolvencyMonths - player.MonthsInsolvent;
-                Util.AddLog(state, player.Id, $"Achtung: Kein Kreditrahmen mehr! Noch {left} Monat{(left == 1 ? "" : "e")} bis zur Insolvenz.");
+                Util.AddLog(state, player.Id, (Lang.En ? $"Warning: no credit line left! {left} month{(left == 1 ? "" : "s")} until insolvency." : $"Achtung: Kein Kreditrahmen mehr! Noch {left} Monat{(left == 1 ? "" : "e")} bis zur Insolvenz."));
             }
         }
         else
@@ -898,7 +909,7 @@ public static class Game
         state.Month = 12;
         var best = state.Players.Where(p => !p.Bankrupt).OrderByDescending(p => p.Points).FirstOrDefault();
         if (string.IsNullOrEmpty(state.WinnerId) && best is not null) state.WinnerId = best.Id;
-        Util.AddLog(state, null, $"Nach {state.YearLimit} Jahren ist Schluss{(best is not null ? $": {best.Name} liegt mit {Util.JsNumber(best.Points)} Punkten vorn" : "")}.");
+        Util.AddLog(state, null, (Lang.En ? $"After {state.YearLimit} years it's over{(best is not null ? $": {best.Name} leads with {Util.JsNumber(best.Points)} points" : "")}." : $"Nach {state.YearLimit} Jahren ist Schluss{(best is not null ? $": {best.Name} liegt mit {Util.JsNumber(best.Points)} Punkten vorn" : "")}."));
     }
 
     static void EndOfYear(GameState state)
@@ -911,7 +922,7 @@ public static class Game
                 var hadCrop = plot.Grape is not null && Rules.PlotAgeFactor(plot, state.Year) > 0;
                 if (hadCrop && !plot.HarvestedThisYear && !player.Bankrupt)
                 {
-                    Util.AddLog(state, player.Id, $"{plot.Name}: Trauben nicht gelesen – der Jahrgang ist verloren.");
+                    Util.AddLog(state, player.Id, (Lang.En ? $"{plot.Name}: grapes not harvested – the vintage is lost." : $"{plot.Name}: Trauben nicht gelesen – der Jahrgang ist verloren."));
                 }
                 plot.Oechsle = 0;
                 plot.Health = 1;
@@ -934,7 +945,7 @@ public static class Game
         if (best is not null)
         {
             state.WinnerId = best.Id;
-            Util.AddLog(state, null, $"{best.Name} erreicht {Util.JsNumber(best.Points)} Punkte und gewinnt!");
+            Util.AddLog(state, null, (Lang.En ? $"{best.Name} reaches {Util.JsNumber(best.Points)} points and wins!" : $"{best.Name} erreicht {Util.JsNumber(best.Points)} Punkte und gewinnt!"));
         }
     }
 }

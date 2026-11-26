@@ -6,6 +6,15 @@ namespace Winzer.Engine;
 public static class Exports
 {
     static readonly string[] Countries = ["Japan", "die USA", "Norwegen", "Kanada", "China", "Großbritannien", "Schweden", "die Niederlande"];
+    static readonly Dictionary<string, string> CountriesEn = new()
+    {
+        ["Japan"] = "Japan", ["die USA"] = "the USA", ["Norwegen"] = "Norway", ["Kanada"] = "Canada", ["China"] = "China",
+        ["Großbritannien"] = "Great Britain", ["Schweden"] = "Sweden", ["die Niederlande"] = "the Netherlands",
+    };
+
+    /// <summary>Anzeigename eines gespeicherten (deutschen) Landes; Englisch: „the USA“. Gespeichert bleibt das deutsche Land.</summary>
+    public static string CountryName(string country) => Lang.En && CountriesEn.TryGetValue(country, out var en) ? en : country;
+
     static readonly QualityLevel[] Levels = [QualityLevel.Qualitaetswein, QualityLevel.Kabinett, QualityLevel.Spaetlese];
     const int ContractMonths = 12;
 
@@ -51,11 +60,11 @@ public static class Exports
         Util.AddLog(
             state,
             player.Id,
-            $"Exportanfrage aus {offer.Country}: {Util.JsNumber(bottlesPerMonth)} Flaschen pro Monat für {Util.FormatEuro(pricePerBottle)}.");
+            Lang.En ? $"Export request from {CountryName(offer.Country)}: {Util.JsNumber(bottlesPerMonth)} bottles per month for {Util.FormatEuro(pricePerBottle)}." : $"Exportanfrage aus {offer.Country}: {Util.JsNumber(bottlesPerMonth)} Flaschen pro Monat für {Util.FormatEuro(pricePerBottle)}.");
     }
 
     public static string? ValidateAnswerExport(Player player) =>
-        player.ExportOffer is not null ? null : "Es liegt keine Exportanfrage vor.";
+        player.ExportOffer is not null ? null : Lang.T("Es liegt keine Exportanfrage vor.", "There is no export request.");
 
     public static void AnswerExport(GameState state, Player player, bool accept)
     {
@@ -63,7 +72,7 @@ public static class Exports
         player.ExportOffer = null;
         if (!accept)
         {
-            Util.AddLog(state, player.Id, $"Exportanfrage aus {offer.Country} abgelehnt.");
+            Util.AddLog(state, player.Id, Lang.En ? $"Export request from {CountryName(offer.Country)} declined." : $"Exportanfrage aus {offer.Country} abgelehnt.");
             return;
         }
         player.ExportContract = new ExportContract
@@ -78,7 +87,7 @@ public static class Exports
             MonthsLeft = offer.Months,
             MissedMonths = 0,
         };
-        Util.AddLog(state, player.Id, $"Exportvertrag mit {offer.Country} über {offer.Months} Monate unterschrieben.");
+        Util.AddLog(state, player.Id, Lang.En ? $"Export contract with {CountryName(offer.Country)} signed for {offer.Months} months." : $"Exportvertrag mit {offer.Country} über {offer.Months} Monate unterschrieben.");
     }
 
     /// <summary>Monatsende: Lieferung vor dem Hofverkauf. Fehlmengen kosten Vertragsstrafe.</summary>
@@ -102,11 +111,11 @@ public static class Exports
             var penalty = missing * Economy.ExportPenaltyPerBottle;
             player.Money -= penalty;
             contract.MissedMonths++;
-            Util.AddLog(state, player.Id, $"Export nach {contract.Country}: {Util.JsNumber(missing)} Flaschen fehlen – {Util.FormatEuro(penalty)} Vertragsstrafe.");
+            Util.AddLog(state, player.Id, Lang.En ? $"Export to {CountryName(contract.Country)}: {Util.JsNumber(missing)} bottles missing – {Util.FormatEuro(penalty)} contract penalty." : $"Export nach {contract.Country}: {Util.JsNumber(missing)} Flaschen fehlen – {Util.FormatEuro(penalty)} Vertragsstrafe.");
         }
         else
         {
-            Util.AddLog(state, player.Id, $"Export nach {contract.Country}: {Util.JsNumber(contract.BottlesPerMonth)} Flaschen geliefert (+{Util.FormatEuro(revenue)}).");
+            Util.AddLog(state, player.Id, Lang.En ? $"Export to {CountryName(contract.Country)}: {Util.JsNumber(contract.BottlesPerMonth)} bottles delivered (+{Util.FormatEuro(revenue)})." : $"Export nach {contract.Country}: {Util.JsNumber(contract.BottlesPerMonth)} Flaschen geliefert (+{Util.FormatEuro(revenue)}).");
         }
 
         if (--contract.MonthsLeft > 0) return;
@@ -116,11 +125,11 @@ public static class Exports
             player.Points += Economy.ExportCompletionPoints;
             player.Stats.ExportsCompleted++;
             Rules.ChangeReputation(player, Economy.ExportCompletionReputation);
-            Util.AddLog(state, null, $"{player.Name} hat den Exportvertrag mit {contract.Country} vollständig erfüllt: +{Util.JsNumber(Economy.ExportCompletionPoints)} Punkte.");
+            Util.AddLog(state, null, Lang.En ? $"{player.Name} fully completed the export contract with {CountryName(contract.Country)}: +{Util.JsNumber(Economy.ExportCompletionPoints)} points." : $"{player.Name} hat den Exportvertrag mit {contract.Country} vollständig erfüllt: +{Util.JsNumber(Economy.ExportCompletionPoints)} Punkte.");
         }
         else
         {
-            Util.AddLog(state, player.Id, $"Der Exportvertrag mit {contract.Country} ist ausgelaufen ({contract.MissedMonths} Monate mit Fehlmengen).");
+            Util.AddLog(state, player.Id, Lang.En ? $"The export contract with {CountryName(contract.Country)} has expired ({contract.MissedMonths} months with shortfalls)." : $"Der Exportvertrag mit {contract.Country} ist ausgelaufen ({contract.MissedMonths} Monate mit Fehlmengen).");
         }
     }
 }

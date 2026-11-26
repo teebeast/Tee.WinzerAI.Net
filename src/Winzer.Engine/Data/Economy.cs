@@ -1,18 +1,37 @@
 namespace Winzer.Engine.Data;
 
-public sealed record DifficultyInfo(string Name, string Icon, string Description, double StartMoney, double PriceFactor, double CostFactor);
+public sealed record DifficultyInfo(string NameDe, string NameEn, string Icon, string DescriptionDe, string DescriptionEn, double StartMoney, double PriceFactor, double CostFactor)
+{
+    public string Name => Lang.T(NameDe, NameEn);
+    public string Description => Lang.T(DescriptionDe, DescriptionEn);
+}
 
-public sealed record MarketingInfo(MarketingKind Kind, string Name, double Cost, double Reputation, int[] Months);
+public sealed record MarketingInfo(MarketingKind Kind, string NameDe, string NameEn, double Cost, double Reputation, int[] Months)
+{
+    public string Name => Lang.T(NameDe, NameEn);
+}
 
 public sealed record CompetitionInfo(
-    CompetitionId Id, string Name, int Month, double Fee, int MaxEntries,
-    Dictionary<Medal, double> Thresholds, Dictionary<Medal, double> Points, Dictionary<Medal, double> Reputation);
+    CompetitionId Id, string NameDe, string NameEn, int Month, double Fee, int MaxEntries,
+    Dictionary<Medal, double> Thresholds, Dictionary<Medal, double> Points, Dictionary<Medal, double> Reputation)
+{
+    public string Name => Lang.T(NameDe, NameEn);
+}
 
-public sealed record ProtectionInfo(string Name, double CostPerHa, double Protection);
+public sealed record ProtectionInfo(string NameDe, string NameEn, double CostPerHa, double Protection)
+{
+    public string Name => Lang.T(NameDe, NameEn);
+}
 
-public sealed record AdulterationInfo(string Name, double VolumeFactor, double QualityDelta, int LevelSteps, double Detection);
+public sealed record AdulterationInfo(string NameDe, string NameEn, double VolumeFactor, double QualityDelta, int LevelSteps, double Detection)
+{
+    public string Name => Lang.T(NameDe, NameEn);
+}
 
-public sealed record SabotageInfo(string Name, double Cost);
+public sealed record SabotageInfo(string NameDe, string NameEn, double Cost)
+{
+    public string Name => Lang.T(NameDe, NameEn);
+}
 
 /// <summary>Startwerte fürs Balancing (economy.ts). Namen: GROSS_SCHREIBUNG des Originals in PascalCase.</summary>
 public static class Economy
@@ -24,9 +43,9 @@ public static class Economy
     /// <summary>Schwierigkeitsgrad der menschlichen Spieler; Computergegner spielen immer mit Faktor 1.</summary>
     public static readonly Dictionary<Difficulty, DifficultyInfo> Difficulties = new()
     {
-        [Difficulty.Leicht] = new("Leicht", "🌱", "100.000 € Startkapital, 5 % höhere Erlöse, 5 % weniger Kosten", 100_000, 1.05, 0.95),
-        [Difficulty.Normal] = new("Normal", "🍷", "80.000 € Startkapital, 5 % niedrigere Erlöse", StartMoney, 0.95, 1),
-        [Difficulty.Schwierig] = new("Schwierig", "🔥", "70.000 € Startkapital, 10 % niedrigere Erlöse, 5 % höhere Kosten", 70_000, 0.9, 1.05),
+        [Difficulty.Leicht] = new("Leicht", "Easy", "🌱", "100.000 € Startkapital, 5 % höhere Erlöse, 5 % weniger Kosten", "€100,000 starting capital, 5% higher revenue, 5% lower costs", 100_000, 1.05, 0.95),
+        [Difficulty.Normal] = new("Normal", "Normal", "🍷", "80.000 € Startkapital, 5 % niedrigere Erlöse", "€80,000 starting capital, 5% lower revenue", StartMoney, 0.95, 1),
+        [Difficulty.Schwierig] = new("Schwierig", "Hard", "🔥", "70.000 € Startkapital, 10 % niedrigere Erlöse, 5 % höhere Kosten", "€70,000 starting capital, 10% lower revenue, 5% higher costs", 70_000, 0.9, 1.05),
     };
 
     public const double WorkerSalary = 2_500;
@@ -63,9 +82,9 @@ public static class Economy
 
     public static readonly Dictionary<MarketingKind, MarketingInfo> Marketing = new()
     {
-        [MarketingKind.Social] = new(MarketingKind.Social, "Social Media", 1_000, 1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
-        [MarketingKind.Hoffest] = new(MarketingKind.Hoffest, "Weinprobe/Hoffest", 5_000, 4, [5, 6, 7, 8, 9]),
-        [MarketingKind.Messe] = new(MarketingKind.Messe, "Weinmesse", 12_000, 8, [3]),
+        [MarketingKind.Social] = new(MarketingKind.Social, "Social Media", "Social media", 1_000, 1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
+        [MarketingKind.Hoffest] = new(MarketingKind.Hoffest, "Weinprobe/Hoffest", "Tasting / estate festival", 5_000, 4, [5, 6, 7, 8, 9]),
+        [MarketingKind.Messe] = new(MarketingKind.Messe, "Weinmesse", "Wine fair", 12_000, 8, [3]),
     };
 
     static Dictionary<Medal, double> Medals(double gold, double silber, double bronze) =>
@@ -73,16 +92,21 @@ public static class Economy
 
     public static readonly Dictionary<CompetitionId, CompetitionInfo> Competitions = new()
     {
-        [CompetitionId.Regional] = new(CompetitionId.Regional, "Regionale Weinprämierung", 6, 100, 3,
+        [CompetitionId.Regional] = new(CompetitionId.Regional, "Regionale Weinprämierung", "Regional wine awards", 6, 100, 3,
             Medals(88, 80, 72), Medals(20, 10, 5), Medals(6, 3, 1)),
-        [CompetitionId.Bund] = new(CompetitionId.Bund, "Große Rebenkrone", 11, 300, 3,
+        [CompetitionId.Bund] = new(CompetitionId.Bund, "Große Rebenkrone", "Grand Vine Crown", 11, 300, 3,
             Medals(93, 86, 79), Medals(60, 30, 15), Medals(15, 8, 4)),
     };
 
-    public static readonly Dictionary<Medal, string> MedalNames = new()
+    static readonly Dictionary<Medal, string> MedalNamesDe = new()
     {
         [Medal.Gold] = "Gold", [Medal.Silber] = "Silber", [Medal.Bronze] = "Bronze",
     };
+    static readonly Dictionary<Medal, string> MedalNamesEn = new()
+    {
+        [Medal.Gold] = "Gold", [Medal.Silber] = "Silver", [Medal.Bronze] = "Bronze",
+    };
+    public static Dictionary<Medal, string> MedalNames => Lang.En ? MedalNamesEn : MedalNamesDe;
 
     public const double LoanInterestRate = 0.06;
     public const double OverdraftInterestRate = 0.12;
@@ -152,9 +176,9 @@ public static class Economy
 
     public static readonly Dictionary<ProtectionStrategy, ProtectionInfo> Protection = new()
     {
-        [ProtectionStrategy.None] = new("Kein Pflanzenschutz", 0, 0),
-        [ProtectionStrategy.Conventional] = new("Konventionell", 600, 0.9),
-        [ProtectionStrategy.Bio] = new("Bio", 900, 0.7),
+        [ProtectionStrategy.None] = new("Kein Pflanzenschutz", "No crop protection", 0, 0),
+        [ProtectionStrategy.Conventional] = new("Konventionell", "Conventional", 600, 0.9),
+        [ProtectionStrategy.Bio] = new("Bio", "Organic", 900, 0.7),
     };
     public static readonly int[] ProtectionMonths = [5, 6, 7, 8];
     public const int BioConversionMonths = 24;
@@ -196,9 +220,9 @@ public static class Economy
 
     public static readonly Dictionary<AdulterationMethod, AdulterationInfo> Adulteration = new()
     {
-        [AdulterationMethod.Wasser] = new("Strecken mit Wasser", 1.2, -15, 0, 0.15),
-        [AdulterationMethod.Zucker] = new("Unerlaubte Aufzuckerung", 1, 0, 1, 0.25),
-        [AdulterationMethod.Glykol] = new("„Frostschutz-Süße“", 1, 0, 2, 0.4),
+        [AdulterationMethod.Wasser] = new("Strecken mit Wasser", "Watering down", 1.2, -15, 0, 0.15),
+        [AdulterationMethod.Zucker] = new("Unerlaubte Aufzuckerung", "Illegal chaptalization", 1, 0, 1, 0.25),
+        [AdulterationMethod.Glykol] = new("„Frostschutz-Süße“", "“Antifreeze sweetness”", 1, 0, 2, 0.4),
     };
     public const double ControlChance = 0.03;
     public const double ScandalFine = 20_000;
@@ -207,8 +231,8 @@ public static class Economy
 
     public static readonly Dictionary<SabotageKind, SabotageInfo> Sabotage = new()
     {
-        [SabotageKind.Geruecht] = new("Gerüchte streuen", 3_000),
-        [SabotageKind.Weinberg] = new("Weinberg beschädigen", 8_000),
+        [SabotageKind.Geruecht] = new("Gerüchte streuen", "Spread rumors", 3_000),
+        [SabotageKind.Weinberg] = new("Weinberg beschädigen", "Damage vineyard", 8_000),
     };
     public const double SabotageRumorReputation = 10;
     public const double SabotageVineyardLoss = 0.3;

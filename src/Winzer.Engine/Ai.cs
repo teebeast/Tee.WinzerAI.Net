@@ -5,8 +5,12 @@ namespace Winzer.Engine;
 public sealed record AiProfile
 {
     public required AiProfileId Id { get; init; }
-    public required string Name { get; init; }
-    public required string Description { get; init; }
+    public required string NameDe { get; init; }
+    public required string NameEn { get; init; }
+    public required string DescriptionDe { get; init; }
+    public required string DescriptionEn { get; init; }
+    public string Name => Lang.T(NameDe, NameEn);
+    public string Description => Lang.T(DescriptionDe, DescriptionEn);
     /// <summary>Bevorzugte Rebsorten; gepflanzt wird die, die am besten zum Gebiet passt</summary>
     public required GrapeId[] Grapes { get; init; }
     /// <summary>Frühester Lesemonat</summary>
@@ -59,8 +63,9 @@ public static class Ai
     {
         [AiProfileId.Tradition] = new AiProfile
         {
-            Id = AiProfileId.Tradition, Name = "Traditionswinzer",
-            Description = "Riesling und Spätburgunder, späte Lese, Kellermeister und Prämierungen.",
+            Id = AiProfileId.Tradition, NameDe = "Traditionswinzer", NameEn = "Traditional winemaker",
+            DescriptionDe = "Riesling und Spätburgunder, späte Lese, Kellermeister und Prämierungen.",
+            DescriptionEn = "Riesling and Spätburgunder, late harvest, cellar master and wine awards.",
             Grapes = [GrapeId.Riesling, GrapeId.Spaetburgunder, GrapeId.Lemberger, GrapeId.Weissburgunder],
             HarvestMonth = 10, MinOechsle = 73, BulkShare = 0.1, CashReserve = 20_000,
             KeepMonthsOfDemand = 12, Competitions = [CompetitionId.Regional, CompetitionId.Bund], CellarMaster = true, OnlineShop = false,
@@ -69,8 +74,9 @@ public static class Ai
         },
         [AiProfileId.Genossenschaft] = new AiProfile
         {
-            Id = AiProfileId.Genossenschaft, Name = "Genossenschafts-Typ",
-            Description = "Masse statt Klasse: Müller-Thurgau und Dornfelder, viel Fasswein und Großhandel.",
+            Id = AiProfileId.Genossenschaft, NameDe = "Genossenschafts-Typ", NameEn = "Cooperative type",
+            DescriptionDe = "Masse statt Klasse: Müller-Thurgau und Dornfelder, viel Fasswein und Großhandel.",
+            DescriptionEn = "Quantity over quality: Müller-Thurgau and Dornfelder, lots of bulk wine and wholesale.",
             Grapes = [GrapeId.MuellerThurgau, GrapeId.Dornfelder, GrapeId.Silvaner, GrapeId.Trollinger],
             HarvestMonth = 9, MinOechsle = 68, BulkShare = 0.3, CashReserve = 30_000,
             KeepMonthsOfDemand = 6, Competitions = [CompetitionId.Regional, CompetitionId.Bund], CellarMaster = false, OnlineShop = false,
@@ -79,8 +85,9 @@ public static class Ai
         },
         [AiProfileId.Bio] = new AiProfile
         {
-            Id = AiProfileId.Bio, Name = "Biopionier",
-            Description = "Bio-Weinbau mit Silvaner und Spätburgunder, alles in die Flasche, Hoffeste und Online-Shop.",
+            Id = AiProfileId.Bio, NameDe = "Biopionier", NameEn = "Organic pioneer",
+            DescriptionDe = "Bio-Weinbau mit Silvaner und Spätburgunder, alles in die Flasche, Hoffeste und Online-Shop.",
+            DescriptionEn = "Organic viticulture with Silvaner and Spätburgunder, everything bottled, estate festivals and online shop.",
             Grapes = [GrapeId.Weissburgunder, GrapeId.Silvaner, GrapeId.Spaetburgunder, GrapeId.Riesling, GrapeId.Regent],
             HarvestMonth = 10, MinOechsle = 70, BulkShare = 0, CashReserve = 15_000,
             KeepMonthsOfDemand = 18, Competitions = [CompetitionId.Regional, CompetitionId.Bund], CellarMaster = true, OnlineShop = true,
@@ -89,8 +96,9 @@ public static class Ai
         },
         [AiProfileId.Schlitzohr] = new AiProfile
         {
-            Id = AiProfileId.Schlitzohr, Name = "Schlitzohr",
-            Description = "Riskant: kauft auf Pump, bietet hoch, panscht gelegentlich und streut Gerüchte.",
+            Id = AiProfileId.Schlitzohr, NameDe = "Schlitzohr", NameEn = "Sly fox",
+            DescriptionDe = "Riskant: kauft auf Pump, bietet hoch, panscht gelegentlich und streut Gerüchte.",
+            DescriptionEn = "Risky: buys on credit, bids high, occasionally adulterates wine and spreads rumors.",
             Grapes = [GrapeId.Dornfelder, GrapeId.Riesling, GrapeId.Grauburgunder, GrapeId.Lemberger],
             HarvestMonth = 10, MinOechsle = 65, BulkShare = 0.3, CashReserve = 15_000,
             KeepMonthsOfDemand = 8, Competitions = [CompetitionId.Regional, CompetitionId.Bund], CellarMaster = true, OnlineShop = true,

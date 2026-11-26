@@ -14,7 +14,8 @@ namespace Winzer.Ui.Scenes;
 public static partial class MarketScene
 {
     static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
-    static readonly string[] TabNames = ["Aufträge & Export", "Großhandel", "Marketing", "Prämierungen"];
+    // Als Eigenschaft, damit die Sprache beim Lesen gilt
+    static string[] TabNames => [Lang.T("Aufträge & Export", "Orders & export"), Lang.T("Großhandel", "Wholesale"), "Marketing", Lang.T("Prämierungen", "Wine awards")];
 
     public static SkiaControl Build(GameSession session)
     {
@@ -45,7 +46,7 @@ public static partial class MarketScene
     internal static SkiaControl Rule(double y) => Kit.Box(32, y, 460, 2, Theme.PaperLine);
 
     /// <summary>Preis je Flasche mit Cent, z. B. „8,40 €“</summary>
-    internal static string Price(double value) => value.ToString("#,##0.00", German) + " €";
+    internal static string Price(double value) => Lang.En ? "€" + value.ToString("#,##0.00", CultureInfo.InvariantCulture) : value.ToString("#,##0.00", German) + " €";
 
     internal static string Signed(double value, int decimals = 1) =>
         (value < 0 ? "−" : "+") + Util.FormatNumber(Math.Abs(value), decimals);
@@ -67,7 +68,7 @@ public static partial class MarketScene
 
     /// <summary>Kleines Schild, z. B. „+6 Punkte“</summary>
     internal static SkiaControl Chip(string text, double x, double y, double w, Color fill, Color color, double size = 15) =>
-        Kit.Box(x, y, w, size * 2, fill, size).With(Kit.Text(text, 0, size * 0.3, w, size * 1.5, size, color, bold: true, align: Align.Center));
+        Kit.Box(x, y, w, size * 2, fill, size).With(Kit.Centered(text, 0, w, size * 2, size, color, bold: true));
 
     /// <summary>Goldener Rahmen über einer gewählten Karte – als letztes Kind anhängen; null, wenn nicht gewählt</summary>
     internal static SkiaControl? SelectionFrame(bool selected, double w, double h, double radius = 16) =>
@@ -91,7 +92,7 @@ public static partial class MarketScene
 
     internal static string GrapeName(WineInfo wine) => Grapes.All[wine.Grape].Name.Replace(" (PIWI)", "") + (wine.Rose ? " Rosé" : "");
 
-    internal static string KindName(BottleLot lot) => lot.Sparkling ? "Sekt" : Quality.QualityInfo(lot.Level).Name;
+    internal static string KindName(BottleLot lot) => lot.Sparkling ? Lang.T("Sekt", "Sparkling") : Quality.QualityInfo(lot.Level).Name;
 
     internal static string ShortLevel(BottleLot lot) => lot.Sparkling ? "SEKT" : lot.Level switch
     {

@@ -96,8 +96,8 @@ public static class Rules
 
     public static string WineLabel(WineInfo wine)
     {
-        var kind = wine is BottleLot { Sparkling: true } ? "Sekt" : Quality.QualityInfo(wine.Level).Name;
-        return $"{Grapes.All[wine.Grape].Name} {(wine.Rose ? "Rosé " : "")}{kind} (Jg. {wine.Vintage})";
+        var kind = wine is BottleLot { Sparkling: true } ? Lang.T("Sekt", "sparkling") : Quality.QualityInfo(wine.Level).Name;
+        return $"{Grapes.All[wine.Grape].Name} {(wine.Rose ? "Rosé " : "")}{kind} ({Lang.T("Jg.", "vintage")} {wine.Vintage})";
     }
 
     /// <summary>Ändert die Bekanntheit; Zuwächse schrumpfen, je bekannter das Weingut schon ist. Liefert die tatsächliche Änderung.</summary>
@@ -153,7 +153,7 @@ public static class Rules
         {
             var revenue = Js.Round(overflowHl * 100 * Economy.OverflowPricePerLiter);
             player.Money += revenue;
-            Util.AddLog(state, player.Id, $"Tanks voll! {Util.JsNumber(overflowHl)} hl Most billig abgegeben: +{Util.FormatEuro(revenue)}.");
+            Util.AddLog(state, player.Id, Lang.En ? $"Tanks full! {Util.JsNumber(overflowHl)} hl of must sold off cheaply: +{Util.FormatEuro(revenue)}." : $"Tanks voll! {Util.JsNumber(overflowHl)} hl Most billig abgegeben: +{Util.FormatEuro(revenue)}.");
         }
     }
 }

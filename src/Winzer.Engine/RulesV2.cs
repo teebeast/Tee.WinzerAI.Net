@@ -4,25 +4,35 @@ namespace Winzer.Engine;
 
 /// <summary>Jahresziel: eines von drei Angeboten im Januar, Abrechnung im Dezember</summary>
 public sealed record GoalDef(
-    string Id, string Title, double Points,
+    string Id, string TitleDe, string TitleEn, double Points,
     Func<GameState, Player, string> Text,
     Func<GameState, Player, bool> Available,
-    Func<GameState, Player, (double Value, double Target)> Progress);
+    Func<GameState, Player, (double Value, double Target)> Progress)
+{
+    public string Title => Lang.T(TitleDe, TitleEn);
+}
 
 /// <summary>
 /// Ambition: geheimes Fernziel, das beim Erreichen einmalig Punkte bringt. Die Punkte richten sich danach, wie schwer
 /// das Ziel zu erreichen ist – wer viel will, muss viel wagen.
 /// </summary>
 public sealed record AmbitionDef(
-    string Id, string Icon, string Name, string Text, double Points,
+    string Id, string Icon, string NameDe, string NameEn, string TextDe, string TextEn, double Points,
     Func<GameState, Player, (double Value, double Target)> Progress)
 {
+    public string Name => Lang.T(NameDe, NameEn);
+    public string Text => Lang.T(TextDe, TextEn);
+
     /// <summary>Einstufung für die Anzeige, abgeleitet aus den Punkten</summary>
-    public string Difficulty => Points >= 50 ? "schwer" : Points >= 25 ? "mittel" : "leicht";
+    public string Difficulty => Points >= 50 ? Lang.T("schwer", "hard") : Points >= 25 ? Lang.T("mittel", "medium") : Lang.T("leicht", "easy");
 }
 
 /// <summary>Ausbau des Guts</summary>
-public sealed record BuildingDef(string Id, string Icon, string Name, double Cost, double MonthlyCost, string Text);
+public sealed record BuildingDef(string Id, string Icon, string NameDe, string NameEn, double Cost, double MonthlyCost, string TextDe, string TextEn)
+{
+    public string Name => Lang.T(NameDe, NameEn);
+    public string Text => Lang.T(TextDe, TextEn);
+}
 
 /// <summary>
 /// Regelversion 2: Erweiterungen gegenüber dem Original. Alles hier greift nur, wenn
@@ -49,18 +59,18 @@ public static class RulesV2
     {
         var month = Game.MonthNames[state.Month - 1];
         if (!On(state)) return month;
-        if (state.Month == 1) return "Winter (Januar/Februar)";
-        return state.HalfMonth > 0 ? $"{month}, {state.HalfMonth}. Hälfte" : month;
+        if (state.Month == 1) return Lang.T("Winter (Januar/Februar)", "Winter (January/February)");
+        return state.HalfMonth > 0 ? (Lang.En ? $"{month}, {(state.HalfMonth == 1 ? "1st" : "2nd")} half" : $"{month}, {state.HalfMonth}. Hälfte") : month;
     }
 
     /// <summary>Bezeichnung des nächsten Zugs für die Schaltfläche „weiter“</summary>
     public static string NextTurnName(GameState state)
     {
         if (!On(state)) return Game.MonthNames[state.Month % 12];
-        if (state.HalfMonth == 1) return $"die 2. {Game.MonthNames[state.Month - 1]}hälfte";
+        if (state.HalfMonth == 1) return (Lang.En ? $"the 2nd half of {Game.MonthNames[state.Month - 1]}" : $"die 2. {Game.MonthNames[state.Month - 1]}hälfte");
         var next = state.Month == 1 ? 3 : state.Month % 12 + 1;
         if (next == 1) return "Winter";
-        return HasHalves(next) ? $"{Game.MonthNames[next - 1]} (1. Hälfte)" : Game.MonthNames[next - 1];
+        return HasHalves(next) ? (Lang.En ? $"{Game.MonthNames[next - 1]} (1st half)" : $"{Game.MonthNames[next - 1]} (1. Hälfte)") : Game.MonthNames[next - 1];
     }
 
     /// <summary>Erste Monatshälfte: die halbe Reife dieses Monats beim Wetter der ersten Hälfte, sonst nichts.</summary>
@@ -86,7 +96,7 @@ public static class RulesV2
         var weather = Weather.DrawWeather(state.Rng, state.Forecast);
         state.LastWeather = weather;
         state.RipeningWeather.Add(weather);
-        Util.AddLog(state, null, $"Wetter in der ersten {Game.MonthNames[state.Month - 1]}hälfte: {Weather.WeatherLabels[weather]}.");
+        Util.AddLog(state, null, (Lang.En ? $"Weather in the first half of {Game.MonthNames[state.Month - 1]}: {Weather.WeatherLabels[weather]}." : $"Wetter in der ersten {Game.MonthNames[state.Month - 1]}hälfte: {Weather.WeatherLabels[weather]}."));
         foreach (var player in state.Players)
         {
             if (player.Bankrupt) continue;
@@ -137,36 +147,36 @@ public static class RulesV2
 
     public static readonly GoalDef[] Goals =
     [
-        new("medaillen", "Zwei Medaillen", 12,
-            (s, p) => "Gewinne in diesem Jahr zwei Medaillen.",
+        new("medaillen", "Zwei Medaillen", "Two medals", 12,
+            (s, p) => Lang.T("Gewinne in diesem Jahr zwei Medaillen.", "Win two medals this year."),
             (s, p) => s.Year >= 2,
             (s, p) => (p.Stats.Medals - Start(p, "medals"), 2)),
-        new("absatz", "Flaschen verkaufen", 8,
-            (s, p) => $"Verkaufe in diesem Jahr {Util.FormatNumber(SalesTarget(p))} Flaschen.",
+        new("absatz", "Flaschen verkaufen", "Sell bottles", 8,
+            (s, p) => (Lang.En ? $"Sell {Util.FormatNumber(SalesTarget(p))} bottles this year." : $"Verkaufe in diesem Jahr {Util.FormatNumber(SalesTarget(p))} Flaschen."),
             (s, p) => s.Year >= 2,
             (s, p) => (p.Stats.BottlesSold - Start(p, "bottlesSold"), SalesTarget(p))),
-        new("schulden", "Schulden halbieren", 8,
-            (s, p) => $"Senke den Kredit bis Jahresende auf höchstens {Util.FormatEuro(Math.Floor(Start(p, "loan") / 2))}.",
+        new("schulden", "Schulden halbieren", "Halve your debt", 8,
+            (s, p) => (Lang.En ? $"Reduce your loan to at most {Util.FormatEuro(Math.Floor(Start(p, "loan") / 2))} by year end." : $"Senke den Kredit bis Jahresende auf höchstens {Util.FormatEuro(Math.Floor(Start(p, "loan") / 2))}."),
             (s, p) => p.Loan >= 20_000,
             (s, p) => (Math.Max(0, Start(p, "loan") - p.Loan), Math.Ceiling(Start(p, "loan") / 2))),
-        new("bekanntheit", "Bekannter werden", 8,
-            (s, p) => $"Erreiche zum Jahresende eine Bekanntheit von {Util.JsNumber(Js.Round(Start(p, "reputation")) + 6)}.",
+        new("bekanntheit", "Bekannter werden", "Become better known", 8,
+            (s, p) => (Lang.En ? $"Reach a reputation of {Util.JsNumber(Js.Round(Start(p, "reputation")) + 6)} by year end." : $"Erreiche zum Jahresende eine Bekanntheit von {Util.JsNumber(Js.Round(Start(p, "reputation")) + 6)}."),
             (s, p) => p.Reputation < 80,
             (s, p) => (Js.Round(p.Reputation), Js.Round(Start(p, "reputation")) + 6)),
-        new("flaeche", "Rebfläche vergrößern", 6,
-            (s, p) => "Pflanze eine Brache oder ersteigere einen bestockten Weinberg.",
+        new("flaeche", "Rebfläche vergrößern", "Expand vineyard area", 6,
+            (s, p) => Lang.T("Pflanze eine Brache oder ersteigere einen bestockten Weinberg.", "Plant a fallow plot or win a planted vineyard at auction."),
             (s, p) => true,
             (s, p) => (Market.PlantedHectares(p) > Start(p, "planted") ? 1 : 0, 1)),
-        new("praedikat", "Eine Auslese lesen", 10,
-            (s, p) => "Lies in diesem Jahr eine Auslese oder höher.",
+        new("praedikat", "Eine Auslese lesen", "Harvest an Auslese", 10,
+            (s, p) => Lang.T("Lies in diesem Jahr eine Auslese oder höher.", "Harvest an Auslese or higher this year."),
             (s, p) => p.Plots.Any(plot => plot.Grape is not null && Rules.PlotAgeFactor(plot, s.Year) > 0),
             (s, p) => (Start(p, "bestThisYear") >= Rules.LevelRank(QualityLevel.Auslese) ? 1 : 0, 1)),
-        new("vermoegen", "Vermögen aufbauen", 6,
-            (s, p) => "Steigere das Reinvermögen in diesem Jahr um 40.000 €.",
+        new("vermoegen", "Vermögen aufbauen", "Build wealth", 6,
+            (s, p) => Lang.En ? $"Increase your net worth by {Util.FormatEuro(40_000)} this year." : "Steigere das Reinvermögen in diesem Jahr um 40.000 €.",
             (s, p) => true,
             (s, p) => (Market.NetWorth(p) - Start(p, "netWorth"), 40_000)),
-        new("auftraege", "Zwei Aufträge liefern", 8,
-            (s, p) => "Liefere in diesem Jahr zwei Kundenaufträge.",
+        new("auftraege", "Zwei Aufträge liefern", "Deliver two orders", 8,
+            (s, p) => Lang.T("Liefere in diesem Jahr zwei Kundenaufträge.", "Deliver two customer orders this year."),
             (s, p) => s.Year >= 2,
             (s, p) => (p.Stats.OrdersDelivered - Start(p, "orders"), 2)),
     ];
@@ -232,7 +242,7 @@ public static class RulesV2
             if (player.Buildings.Contains("schatzkammer"))
             {
                 player.Points += 5;
-                Util.AddLog(state, player.Id, "Die Schatzkammer mehrt den Ruf des Hauses: +5 Punkte.", LogTone.Good);
+                Util.AddLog(state, player.Id, Lang.T("Die Schatzkammer mehrt den Ruf des Hauses: +5 Punkte.", "The treasury adds to the estate's good name: +5 points."), LogTone.Good);
             }
             var goal = Goal(player.Goal);
             var reached = goal is not null && GoalReached(state, player, goal);
@@ -240,16 +250,16 @@ public static class RulesV2
             {
                 player.Points += goal.Points;
                 Rules.ChangeReputation(player, 2);
-                Util.AddLog(state, player.Id, $"Jahresziel erreicht: {goal.Title}. +{Util.JsNumber(goal.Points)} Punkte.", LogTone.Good);
+                Util.AddLog(state, player.Id, (Lang.En ? $"Yearly goal reached: {goal.Title}. +{Util.JsNumber(goal.Points)} points." : $"Jahresziel erreicht: {goal.Title}. +{Util.JsNumber(goal.Points)} Punkte."), LogTone.Good);
             }
             else if (goal is not null)
             {
-                Util.AddLog(state, player.Id, $"Jahresziel verfehlt: {goal.Title}.", LogTone.Bad);
+                Util.AddLog(state, player.Id, (Lang.En ? $"Yearly goal missed: {goal.Title}." : $"Jahresziel verfehlt: {goal.Title}."), LogTone.Bad);
             }
             player.Review = new YearReview
             {
                 Year = state.Year,
-                GoalText = goal?.Title ?? "kein Ziel gewählt",
+                GoalText = goal?.Title ?? Lang.T("kein Ziel gewählt", "no goal chosen"),
                 GoalReached = reached,
                 GoalPoints = reached ? goal!.Points : 0,
                 PointsGained = player.Points - Start(player, "points"),
@@ -282,17 +292,17 @@ public static class RulesV2
     //   neunte Gut nebenbei und etwa jedes vierte, das gezielt bis zum Schätzwert mitbot.
     public static readonly AmbitionDef[] Ambitions =
     [
-        new("sortenkoenig", "👑", "Sortenkönig", "Gewinne drei Goldmedaillen mit derselben Rebsorte.", 30,
+        new("sortenkoenig", "👑", "Sortenkönig", "Variety King", "Gewinne drei Goldmedaillen mit derselben Rebsorte.", "Win three gold medals with the same grape variety.", 30,
             (s, p) => (p.GoldByGrape.Count == 0 ? 0 : p.GoldByGrape.Values.Max(), 3)),
-        new("grossgrund", "🗺️", "Großgrundbesitzer", $"Bewirtschafte {Util.JsNumber(EstateHectares)} Hektar.", 60,
+        new("grossgrund", "🗺️", "Großgrundbesitzer", "Landowner", $"Bewirtschafte {Util.JsNumber(EstateHectares)} Hektar.", $"Farm {Util.JsNumber(EstateHectares)} hectares.", 60,
             (s, p) => (Market.TotalHectares(p), EstateHectares)),
-        new("biovorreiter", "🌙", "Bio-Vorreiter", "Erreiche das Lunaris-Siegel.", 30,
+        new("biovorreiter", "🌙", "Bio-Vorreiter", "Organic Pioneer", "Erreiche das Lunaris-Siegel.", "Earn the Lunaris seal.", 30,
             (s, p) => (p.BioLabel is { } label ? Array.IndexOf(BioData.BioOrder, label) + 1 : 0, 3)),
-        new("exportmeister", "🌍", "Exportmeister", "Erfülle zwei Exportverträge vollständig.", 25,
+        new("exportmeister", "🌍", "Exportmeister", "Export Master", "Erfülle zwei Exportverträge vollständig.", "Fully complete two export contracts.", 25,
             (s, p) => (p.Stats.ExportsCompleted, 2)),
-        new("sektbaron", "🍾", "Sektbaron", "Setze viermal Sekt an.", 20,
+        new("sektbaron", "🍾", "Sektbaron", "Sparkling Baron", "Setze viermal Sekt an.", "Start sparkling wine four times.", 20,
             (s, p) => (p.Stats.Sekt, 4)),
-        new("saubermann", "🕊️", "Saubermann", $"Wirtschafte {CleanYears} Jahre, ohne je zu panschen oder zu sabotieren.", 15,
+        new("saubermann", "🕊️", "Saubermann", "Clean Hands", $"Wirtschafte {CleanYears} Jahre, ohne je zu panschen oder zu sabotieren.", $"Run your estate for {CleanYears} years without ever adulterating wine or sabotaging.", 15,
             (s, p) => (p.Tainted ? 0 : Math.Min(CleanYears, s.Year - 1), CleanYears)),
     ];
 
@@ -316,7 +326,7 @@ public static class RulesV2
             player.AmbitionsDone.Add(id);
             player.Points += ambition.Points;
             // Nur der Spieler selbst erfährt davon – Ambitionen bleiben geheim
-            Util.AddLog(state, player.Id, $"{ambition.Icon} Ambition erfüllt: {ambition.Name}! +{Util.JsNumber(ambition.Points)} Punkte.", LogTone.Good);
+            Util.AddLog(state, player.Id, (Lang.En ? $"{ambition.Icon} Ambition fulfilled: {ambition.Name}! +{Util.JsNumber(ambition.Points)} points." : $"{ambition.Icon} Ambition erfüllt: {ambition.Name}! +{Util.JsNumber(ambition.Points)} Punkte."), LogTone.Good);
         }
     }
 
@@ -324,10 +334,10 @@ public static class RulesV2
 
     public static readonly BuildingDef[] Buildings =
     [
-        new("schaenke", "🍽️", "Gutsschänke", 120_000, 800, "Ganzjähriger Ausschank: +25 % Ab-Hof-Nachfrage."),
-        new("gaestehaus", "🛏️", "Gästehaus", 180_000, 0, "Zimmer für Weinreisende: Einnahmen von Mai bis Oktober, einmalig +3 Bekanntheit."),
-        new("brennerei", "⚗️", "Brennerei", 100_000, 0, "Tresterbrand aus jeder Lese: +250 € je gelesenem Hektar."),
-        new("schatzkammer", "🗝️", "Schatzkammer", 300_000, 0, "Raritätenkeller: +10 % auf Ab-Hof-Preise und jedes Jahr +5 Punkte."),
+        new("schaenke", "🍽️", "Gutsschänke", "Estate Tavern", 120_000, 800, "Ganzjähriger Ausschank: +25 % Ab-Hof-Nachfrage.", "Year-round wine service: +25 % cellar-door demand."),
+        new("gaestehaus", "🛏️", "Gästehaus", "Guest House", 180_000, 0, "Zimmer für Weinreisende: Einnahmen von Mai bis Oktober, einmalig +3 Bekanntheit.", "Rooms for wine travelers: income from May to October, one-time +3 reputation."),
+        new("brennerei", "⚗️", "Brennerei", "Distillery", 100_000, 0, "Tresterbrand aus jeder Lese: +250 € je gelesenem Hektar.", "Pomace brandy from every harvest: +€250 per harvested hectare."),
+        new("schatzkammer", "🗝️", "Schatzkammer", "Treasury", 300_000, 0, "Raritätenkeller: +10 % auf Ab-Hof-Preise und jedes Jahr +5 Punkte.", "Cellar of rarities: +10 % on cellar-door prices and +5 points every year."),
     ];
 
     public static BuildingDef? Building(string id) => Array.Find(Buildings, b => b.Id == id);
@@ -345,52 +355,52 @@ public static class RulesV2
 
     public static string? Validate(GameState state, Player player, GameAction action)
     {
-        if (!On(state)) return "Das gibt es nur mit den erweiterten Regeln.";
+        if (!On(state)) return Lang.T("Das gibt es nur mit den erweiterten Regeln.", "This is only available with the extended rules.");
         switch (action)
         {
             case GameAction.SetPriceLevel a:
-                if (!double.IsFinite(a.Level) || a.Level < MinPriceLevel - 1e-9 || a.Level > MaxPriceLevel + 1e-9) return "Der Preisaufschlag muss zwischen −20 % und +40 % liegen.";
+                if (!double.IsFinite(a.Level) || a.Level < MinPriceLevel - 1e-9 || a.Level > MaxPriceLevel + 1e-9) return Lang.T("Der Preisaufschlag muss zwischen −20 % und +40 % liegen.", "The price markup must be between −20 % and +40 %.");
                 return null;
             case GameAction.ChooseGoal a:
-                if (player.Goal is not null) return "Das Jahresziel steht schon fest.";
-                if (!player.GoalOffers.Contains(a.GoalId)) return "Dieses Ziel steht nicht zur Wahl.";
+                if (player.Goal is not null) return Lang.T("Das Jahresziel steht schon fest.", "The yearly goal is already set.");
+                if (!player.GoalOffers.Contains(a.GoalId)) return Lang.T("Dieses Ziel steht nicht zur Wahl.", "This goal is not on offer.");
                 return null;
             case GameAction.OfferPlot a:
             {
                 var plot = player.Plots.Find(p => p.Id == a.PlotId);
-                if (plot is null) return "Unbekannte Parzelle.";
+                if (plot is null) return Lang.T("Unbekannte Parzelle.", "Unknown plot.");
                 if (plot.ForAuction) return OfferedText;
                 // Mindestens eine Parzelle bleibt beim Gut
-                if (player.Plots.Count(p => !p.ForAuction) <= 1) return "Die letzte Parzelle kann nicht versteigert werden.";
+                if (player.Plots.Count(p => !p.ForAuction) <= 1) return Lang.T("Die letzte Parzelle kann nicht versteigert werden.", "The last plot cannot be auctioned.");
                 return null;
             }
             case GameAction.WithdrawPlot a:
             {
                 var plot = player.Plots.Find(p => p.Id == a.PlotId);
-                if (plot is null) return "Unbekannte Parzelle.";
-                if (!plot.ForAuction) return "Die Parzelle ist nicht zur Versteigerung angemeldet.";
-                if (OfferAnnounced(state, player, plot)) return "Das Los ist schon angekündigt – jetzt entscheidet die Versteigerung.";
+                if (plot is null) return Lang.T("Unbekannte Parzelle.", "Unknown plot.");
+                if (!plot.ForAuction) return Lang.T("Die Parzelle ist nicht zur Versteigerung angemeldet.", "The plot is not registered for the auction.");
+                if (OfferAnnounced(state, player, plot)) return Lang.T("Das Los ist schon angekündigt – jetzt entscheidet die Versteigerung.", "The lot has already been announced – the auction decides now.");
                 return null;
             }
             case GameAction.ChooseAmbition a:
-                if (Ambition(a.AmbitionId) is null) return "Diese Ambition gibt es nicht.";
-                if (player.Ambitions.Contains(a.AmbitionId)) return "Diese Ambition ist schon gewählt.";
-                if (player.Ambitions.Count >= AmbitionCount) return $"Mehr als {AmbitionCount} Ambitionen gibt es nicht.";
+                if (Ambition(a.AmbitionId) is null) return Lang.T("Diese Ambition gibt es nicht.", "This ambition doesn't exist.");
+                if (player.Ambitions.Contains(a.AmbitionId)) return Lang.T("Diese Ambition ist schon gewählt.", "This ambition is already chosen.");
+                if (player.Ambitions.Count >= AmbitionCount) return (Lang.En ? $"You can't have more than {AmbitionCount} ambitions." : $"Mehr als {AmbitionCount} Ambitionen gibt es nicht.");
                 return null;
             case GameAction.Construct a:
-                if (Building(a.BuildingId) is not { } building) return "Diesen Ausbau gibt es nicht.";
-                if (player.Buildings.Contains(a.BuildingId)) return $"{building.Name} steht bereits.";
-                if (player.Money < building.Cost) return $"Nicht genug Geld (benötigt {Util.FormatEuro(building.Cost)}).";
+                if (Building(a.BuildingId) is not { } building) return Lang.T("Diesen Ausbau gibt es nicht.", "This upgrade doesn't exist.");
+                if (player.Buildings.Contains(a.BuildingId)) return (Lang.En ? $"{building.Name} is already built." : $"{building.Name} steht bereits.");
+                if (player.Money < building.Cost) return (Lang.En ? $"Not enough money (need {Util.FormatEuro(building.Cost)})." : $"Nicht genug Geld (benötigt {Util.FormatEuro(building.Cost)}).");
                 return null;
             case GameAction.Donate:
-                if (player.Money < DonationCost(player)) return $"Nicht genug Geld (benötigt {Util.FormatEuro(DonationCost(player))}).";
+                if (player.Money < DonationCost(player)) return (Lang.En ? $"Not enough money (need {Util.FormatEuro(DonationCost(player))})." : $"Nicht genug Geld (benötigt {Util.FormatEuro(DonationCost(player))}).");
                 return null;
             default:
                 return null;
         }
     }
 
-    public const string OfferedText = "Die Parzelle ist zur Versteigerung angemeldet.";
+    public static string OfferedText => Lang.T("Die Parzelle ist zur Versteigerung angemeldet.", "The plot is registered for the auction.");
 
     /// <summary>Ist das Los zu dieser Parzelle schon angekündigt? Dann lässt sich die Anmeldung nicht mehr zurückziehen.</summary>
     public static bool OfferAnnounced(GameState state, Player player, Plot plot) =>
@@ -404,14 +414,14 @@ public static class RulesV2
             {
                 var plot = player.Plots.Find(p => p.Id == a.PlotId)!;
                 plot.ForAuction = true;
-                Util.AddLog(state, player.Id, $"{plot.Name} ({Util.JsNumber(plot.Hectares)} ha) ist zur nächsten Versteigerung angemeldet – Ausruf bei {Util.FormatEuro(Auction.OfferStartPrice(player, plot, state.Year))}.");
+                Util.AddLog(state, player.Id, (Lang.En ? $"{plot.Name} ({Util.JsNumber(plot.Hectares)} ha) is registered for the next auction – starting price {Util.FormatEuro(Auction.OfferStartPrice(player, plot, state.Year))}." : $"{plot.Name} ({Util.JsNumber(plot.Hectares)} ha) ist zur nächsten Versteigerung angemeldet – Ausruf bei {Util.FormatEuro(Auction.OfferStartPrice(player, plot, state.Year))}."));
                 break;
             }
             case GameAction.WithdrawPlot a:
             {
                 var plot = player.Plots.Find(p => p.Id == a.PlotId)!;
                 plot.ForAuction = false;
-                Util.AddLog(state, player.Id, $"{plot.Name} wird doch nicht versteigert.");
+                Util.AddLog(state, player.Id, (Lang.En ? $"{plot.Name} will not be auctioned after all." : $"{plot.Name} wird doch nicht versteigert."));
                 break;
             }
             case GameAction.SetPriceLevel a:
@@ -419,7 +429,7 @@ public static class RulesV2
                 break;
             case GameAction.ChooseGoal a:
                 player.Goal = a.GoalId;
-                Util.AddLog(state, player.Id, $"Jahresziel: {Goal(a.GoalId)!.Title}.");
+                Util.AddLog(state, player.Id, (Lang.En ? $"Yearly goal: {Goal(a.GoalId)!.Title}." : $"Jahresziel: {Goal(a.GoalId)!.Title}."));
                 break;
             case GameAction.ChooseAmbition a:
                 player.Ambitions.Add(a.AmbitionId);
@@ -430,7 +440,7 @@ public static class RulesV2
                 player.Money -= building.Cost;
                 player.Buildings.Add(building.Id);
                 if (building.Id == "gaestehaus") Rules.ChangeReputation(player, 3);
-                Util.AddLog(state, null, $"{player.Name} baut: {building.Name}.");
+                Util.AddLog(state, null, (Lang.En ? $"{player.Name} builds: {building.Name}." : $"{player.Name} baut: {building.Name}."));
                 break;
             }
             case GameAction.Donate:
@@ -439,7 +449,7 @@ public static class RulesV2
                 player.Money -= cost;
                 player.Donations++;
                 player.Points += DonationPoints;
-                Util.AddLog(state, null, $"{player.Name} stiftet {Util.FormatEuro(cost)} für die Weinkultur: +{Util.JsNumber(DonationPoints)} Punkte.");
+                Util.AddLog(state, null, (Lang.En ? $"{player.Name} donates {Util.FormatEuro(cost)} to wine culture: +{Util.JsNumber(DonationPoints)} points." : $"{player.Name} stiftet {Util.FormatEuro(cost)} für die Weinkultur: +{Util.JsNumber(DonationPoints)} Punkte."));
                 break;
             }
         }
@@ -464,7 +474,7 @@ public static class RulesV2
         {
             var income = Js.Round(250 * plot.Hectares);
             player.Money += income;
-            Util.AddLog(state, player.Id, $"Die Brennerei macht aus dem Trester Brand: +{Util.FormatEuro(income)}.");
+            Util.AddLog(state, player.Id, (Lang.En ? $"The distillery turns the pomace into brandy: +{Util.FormatEuro(income)}." : $"Die Brennerei macht aus dem Trester Brand: +{Util.FormatEuro(income)}."));
         }
     }
 
@@ -476,7 +486,7 @@ public static class RulesV2
         if (income > 0)
         {
             player.Money += income;
-            Util.AddLog(state, player.Id, $"Gästehaus: +{Util.FormatEuro(income)}.");
+            Util.AddLog(state, player.Id, (Lang.En ? $"Guest house: +{Util.FormatEuro(income)}." : $"Gästehaus: +{Util.FormatEuro(income)}."));
         }
         player.Money -= costs;
         // Wer bis Ende Februar kein Ziel wählt, bekommt das erste Angebot
@@ -502,11 +512,11 @@ public static class RulesV2
         if (!On(state)) yield break;
         if (player.Ambitions.Count < AmbitionCount)
         {
-            yield return new Hint { Area = HintArea.Hof, Important = true, Text = "Wähle deine zwei Ambitionen – geheime Fernziele. Leichte bringen wenige Punkte, schwere viele." };
+            yield return new Hint { Area = HintArea.Hof, Important = true, Text = Lang.T("Wähle deine zwei Ambitionen – geheime Fernziele. Leichte bringen wenige Punkte, schwere viele.", "Choose your two ambitions – secret long-term goals. Easy ones give few points, hard ones many.") };
         }
         if (player.Goal is null && player.GoalOffers.Count > 0)
         {
-            yield return new Hint { Area = HintArea.Hof, Important = true, Text = "Wähle dein Jahresziel aus drei Angeboten." };
+            yield return new Hint { Area = HintArea.Hof, Important = true, Text = Lang.T("Wähle dein Jahresziel aus drei Angeboten.", "Choose your yearly goal from three offers.") };
         }
     }
 

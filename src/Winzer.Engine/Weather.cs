@@ -4,12 +4,21 @@ public static class Weather
 {
     public static readonly WeatherKind[] WeatherKinds = [WeatherKind.Sonnig, WeatherKind.Wechselhaft, WeatherKind.Nass];
 
-    public static readonly Dictionary<WeatherKind, string> WeatherLabels = new()
+    static readonly Dictionary<WeatherKind, string> WeatherLabelsDe = new()
     {
         [WeatherKind.Sonnig] = "Sonnig",
         [WeatherKind.Wechselhaft] = "Wechselhaft",
         [WeatherKind.Nass] = "Nass",
     };
+
+    static readonly Dictionary<WeatherKind, string> WeatherLabelsEn = new()
+    {
+        [WeatherKind.Sonnig] = "Sunny",
+        [WeatherKind.Wechselhaft] = "Changeable",
+        [WeatherKind.Nass] = "Wet",
+    };
+
+    public static Dictionary<WeatherKind, string> WeatherLabels => Lang.En ? WeatherLabelsEn : WeatherLabelsDe;
 
     /// <summary>Langjähriges Mittel je Monat (Index 0 = Januar) als [sonnig, wechselhaft, nass].</summary>
     static readonly double[][] Climate =

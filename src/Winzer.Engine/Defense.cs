@@ -67,7 +67,7 @@ public static class Defense
         if (!IsInsured(state, player) || lostHa <= 0) return 0;
         var payout = Js.Round(lostHa * Economy.InsuredValuePerHa * (1 - Economy.InsuranceDeductible) / 100) * 100;
         player.Money += payout;
-        Util.AddLog(state, player.Id, $"🛡️ Die Ernteversicherung zahlt {Util.FormatEuro(payout)} für den Schaden durch {cause}.", LogTone.Good);
+        Util.AddLog(state, player.Id, Lang.En ? $"🛡️ The crop insurance pays {Util.FormatEuro(payout)} for the damage caused by {cause}." : $"🛡️ Die Ernteversicherung zahlt {Util.FormatEuro(payout)} für den Schaden durch {cause}.", LogTone.Good);
         return payout;
     }
 
@@ -75,11 +75,11 @@ public static class Defense
 
     public static string? ValidateFrostCandles(GameState state, Player player)
     {
-        if (Array.IndexOf(Economy.FrostMonths, state.Month) < 0) return "Spätfrost droht nur im April und Mai.";
-        if (player.FrostCandles) return "Die Frostkerzen stehen bereits.";
-        if (BearingPlots(state, player).Count == 0) return "Es gibt keine tragenden Reben zu schützen.";
+        if (Array.IndexOf(Economy.FrostMonths, state.Month) < 0) return Lang.T("Spätfrost droht nur im April und Mai.", "Late frost only threatens in April and May.");
+        if (player.FrostCandles) return Lang.T("Die Frostkerzen stehen bereits.", "The frost candles are already in place.");
+        if (BearingPlots(state, player).Count == 0) return Lang.T("Es gibt keine tragenden Reben zu schützen.", "There are no bearing vines to protect.");
         var cost = FrostCandlesCost(state, player);
-        if (player.Money < cost) return $"Nicht genug Geld (benötigt {Util.FormatEuro(cost)}).";
+        if (player.Money < cost) return Lang.En ? $"Not enough money (needs {Util.FormatEuro(cost)})." : $"Nicht genug Geld (benötigt {Util.FormatEuro(cost)}).";
         return null;
     }
 
@@ -88,16 +88,16 @@ public static class Defense
         var cost = FrostCandlesCost(state, player);
         player.Money -= cost;
         player.FrostCandles = true;
-        Util.AddLog(state, player.Id, $"Frostkerzen für alle tragenden Lagen stehen bereit ({Util.FormatEuro(cost)}).");
+        Util.AddLog(state, player.Id, Lang.En ? $"Frost candles are ready for all bearing sites ({Util.FormatEuro(cost)})." : $"Frostkerzen für alle tragenden Lagen stehen bereit ({Util.FormatEuro(cost)}).");
     }
 
     public static string? ValidateInsurance(GameState state, Player player)
     {
-        if (Array.IndexOf(Economy.InsuranceMonths, state.Month) < 0) return "Versicherungen werden nur von Januar bis April abgeschlossen.";
-        if (IsInsured(state, player)) return "Die Ernte ist in diesem Jahr bereits versichert.";
+        if (Array.IndexOf(Economy.InsuranceMonths, state.Month) < 0) return Lang.T("Versicherungen werden nur von Januar bis April abgeschlossen.", "Insurance can only be taken out from January to April.");
+        if (IsInsured(state, player)) return Lang.T("Die Ernte ist in diesem Jahr bereits versichert.", "The harvest is already insured this year.");
         var premium = InsurancePremium(state, player);
-        if (premium == 0) return "Es gibt noch keine tragenden Reben zu versichern.";
-        if (player.Money < premium) return $"Nicht genug Geld (Prämie {Util.FormatEuro(premium)}).";
+        if (premium == 0) return Lang.T("Es gibt noch keine tragenden Reben zu versichern.", "There are no bearing vines to insure yet.");
+        if (player.Money < premium) return Lang.En ? $"Not enough money (premium {Util.FormatEuro(premium)})." : $"Nicht genug Geld (Prämie {Util.FormatEuro(premium)}).";
         return null;
     }
 
@@ -106,26 +106,28 @@ public static class Defense
         var premium = InsurancePremium(state, player);
         player.Money -= premium;
         player.InsuredYear = state.Year;
-        Util.AddLog(state, player.Id, $"Ernteversicherung für Jahr {state.Year} abgeschlossen ({Util.FormatEuro(premium)}).");
+        Util.AddLog(state, player.Id, Lang.En ? $"Crop insurance for year {state.Year} taken out ({Util.FormatEuro(premium)})." : $"Ernteversicherung für Jahr {state.Year} abgeschlossen ({Util.FormatEuro(premium)}).");
     }
 
-    static readonly Dictionary<Installation, (double Cost, string Name)> InstallInfo = new()
+    static readonly Dictionary<Installation, (double Cost, string NameDe, string NameEn)> InstallData = new()
     {
-        [Installation.HailNet] = (Economy.HailNetCostPerHa, "Hagelnetz"),
-        [Installation.Irrigation] = (Economy.IrrigationCostPerHa, "Tröpfchenbewässerung"),
+        [Installation.HailNet] = (Economy.HailNetCostPerHa, "Hagelnetz", "Hail net"),
+        [Installation.Irrigation] = (Economy.IrrigationCostPerHa, "Tröpfchenbewässerung", "Drip irrigation"),
     };
+
+    static (double Cost, string Name) InstallInfoOf(Installation kind) => (InstallData[kind].Cost, Lang.T(InstallData[kind].NameDe, InstallData[kind].NameEn));
 
     static bool IsInstalled(Plot plot, Installation kind) => kind == Installation.HailNet ? plot.HailNet : plot.Irrigation;
 
-    public static double InstallCost(Plot plot, Installation kind) => plot.Hectares * InstallInfo[kind].Cost;
+    public static double InstallCost(Plot plot, Installation kind) => plot.Hectares * InstallData[kind].Cost;
 
     public static string? ValidateInstall(Player player, string plotId, Installation kind)
     {
         var plot = player.Plots.Find(p => p.Id == plotId);
-        if (plot is null) return "Unbekannte Parzelle.";
-        if (IsInstalled(plot, kind)) return $"{InstallInfo[kind].Name} ist bereits installiert.";
+        if (plot is null) return Lang.T("Unbekannte Parzelle.", "Unknown plot.");
+        if (IsInstalled(plot, kind)) return Lang.En ? $"{InstallInfoOf(kind).Name} is already installed." : $"{InstallInfoOf(kind).Name} ist bereits installiert.";
         var cost = InstallCost(plot, kind);
-        if (player.Money < cost) return $"Nicht genug Geld (benötigt {Util.FormatEuro(cost)}).";
+        if (player.Money < cost) return Lang.En ? $"Not enough money (needs {Util.FormatEuro(cost)})." : $"Nicht genug Geld (benötigt {Util.FormatEuro(cost)}).";
         return null;
     }
 
@@ -136,6 +138,6 @@ public static class Defense
         player.Money -= cost;
         if (kind == Installation.HailNet) plot.HailNet = true;
         else plot.Irrigation = true;
-        Util.AddLog(state, player.Id, $"{plot.Name}: {InstallInfo[kind].Name} installiert ({Util.FormatEuro(cost)}).");
+        Util.AddLog(state, player.Id, Lang.En ? $"{plot.Name}: {InstallInfoOf(kind).Name} installed ({Util.FormatEuro(cost)})." : $"{plot.Name}: {InstallInfoOf(kind).Name} installiert ({Util.FormatEuro(cost)}).");
     }
 }

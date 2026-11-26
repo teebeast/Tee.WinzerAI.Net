@@ -30,8 +30,9 @@ public partial class App : Application
         }
         var store = new FileSaveStore();
         var audio = new SynthAudio { Muted = store.GetSetting("muted") == "1" };
-        var window = new MainWindow(new AppHost(store, audio) { Notices = new FileNotices() });
-        window.FillWorkArea();
+        var app = new AppHost(store, audio) { Notices = new FileNotices() };
+        var window = new MainWindow(app);
+        window.ApplyWindowMode(app.FullScreen);
         MainWindow = window;
         window.Show();
     }

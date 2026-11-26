@@ -154,29 +154,29 @@ public static class EstateScene
         }
         if (player.Plots.Count > shown.Count)
         {
-            scene.With(Kit.Button($"+ {player.Plots.Count - shown.Count} weitere Lagen", 28, 280, 250, 48, () => session.Nav.Go(Scene.Weinberg, 0), ButtonKind.Dark, fontSize: 18, align: Align.Center));
+            scene.With(Kit.Button(Lang.En ? $"+ {player.Plots.Count - shown.Count} more sites" : $"+ {player.Plots.Count - shown.Count} weitere Lagen", 28, 280, 250, 48, () => session.Nav.Go(Scene.Weinberg, 0), ButtonKind.Dark, fontSize: 18, align: Align.Center));
         }
 
         // Gebäude
-        scene.With(Building("Kontor", 508, 822, badges.GetValueOrDefault(Scene.Kontor), () => session.Nav.Go(Scene.Kontor)));
-        scene.With(Building("Keller", 778, 822, badges.GetValueOrDefault(Scene.Keller), () => session.Nav.Go(Scene.Keller)));
-        scene.With(Building(player.HasVinothek ? "Vinothek" : "Hofladen", 1048, 822, badges.GetValueOrDefault(Scene.Markt), () => session.Nav.Go(Scene.Markt)));
+        scene.With(Building(Lang.T("Kontor", "Office"), 508, 822, badges.GetValueOrDefault(Scene.Kontor), () => session.Nav.Go(Scene.Kontor)));
+        scene.With(Building(Lang.T("Keller", "Cellar"), 778, 822, badges.GetValueOrDefault(Scene.Keller), () => session.Nav.Go(Scene.Keller)));
+        scene.With(Building(player.HasVinothek ? Lang.T("Vinothek", "Wine room") : Lang.T("Hofladen", "Farm shop"), 1048, 822, badges.GetValueOrDefault(Scene.Markt), () => session.Nav.Go(Scene.Markt)));
         scene.With(Kit.Box(448, 660, 250, 150, Theme.Clear).Tap(() => session.Nav.Go(Scene.Kontor)));
         scene.With(Kit.Box(738, 700, 210, 110, Theme.Clear).Tap(() => session.Nav.Go(Scene.Keller)));
         scene.With(Kit.Box(998, 704, 230, 106, Theme.Clear).Tap(() => session.Nav.Go(Scene.Markt)));
-        scene.With(Building("Dorf", 1640, 372, 0, () => session.Nav.Go(Scene.Dorf), 96));
+        scene.With(Building(Lang.T("Dorf", "Village"), 1640, 372, 0, () => session.Nav.Go(Scene.Dorf), 96));
 
         // Wetterhinweise oben links
         var chipY = 24.0;
         void Chip(string text)
         {
-            scene.With(Kit.Box(28, chipY, 420, 44, Theme.C("#c71c1418"), 22).With(Kit.Text(text, 20, 9, 384, 28, 18, Theme.Cream)));
+            scene.With(Kit.Box(28, chipY, 420, 44, Theme.C("#c71c1418"), 22).With(Kit.Centered(text, 20, 384, 44, 18, Theme.Cream, align: Align.Start)));
             chipY += 52;
         }
         var frost = Defense.FrostChance(state, player);
-        if (frost > 0) Chip($"Spätfrostgefahr diesen Monat: {Js.Round(frost * 100)} %{(player.FrostCandles ? " · Kerzen stehen" : "")}");
-        if (state.Month is 11 or 12) Chip($"Eiswein-Frost im Dezember: {Js.Round(Vineyard.IceWineChance(state, player.RegionId) * 100)} %");
-        if (state.ClimateChange && state.Year > 1) Chip($"Klima: +{Util.FormatNumber(Rules.ClimateWarming(state), 1)} Wärmestufen seit Beginn");
+        if (frost > 0) Chip(Lang.En ? $"Late frost risk this month: {Js.Round(frost * 100)} %{(player.FrostCandles ? " · candles ready" : "")}" : $"Spätfrostgefahr diesen Monat: {Js.Round(frost * 100)} %{(player.FrostCandles ? " · Kerzen stehen" : "")}");
+        if (state.Month is 11 or 12) Chip(Lang.En ? $"Eiswein frost in December: {Js.Round(Vineyard.IceWineChance(state, player.RegionId) * 100)} %" : $"Eiswein-Frost im Dezember: {Js.Round(Vineyard.IceWineChance(state, player.RegionId) * 100)} %");
+        if (state.ClimateChange && state.Year > 1) Chip(Lang.En ? $"Climate: +{Util.FormatNumber(Rules.ClimateWarming(state), 1)} warming steps since the start" : $"Klima: +{Util.FormatNumber(Rules.ClimateWarming(state), 1)} Wärmestufen seit Beginn");
 
         scene.With(News(session));
         scene.With(Tasks(session));
@@ -189,12 +189,12 @@ public static class EstateScene
                     using var p = Draw.Fill(Theme.SkCream);
                     Draw.Path(c, "M2 4 l22 18 -22 18 Z M24 4 l22 18 -22 18 Z", p);
                 }))
-                .With(Kit.Text("Vorspulen", 0, 68, 96, 20, 14, Theme.CreamSoft, align: Align.Center))
+                .With(Kit.Text(Lang.T("Vorspulen", "Fast-forward"), 0, 68, 96, 20, 14, Theme.CreamSoft, align: Align.Center))
                 .Tap(() => session.Run(new GameAction.AutoSkipTurn())));
             var next = RulesV2.NextTurnName(state);
             var end = Kit.Box(1486, 876, 298, 96, radius: 18, gradient: Kit.Vertical(Theme.Wine, Theme.WineDark), stroke: Theme.Gold, strokeWidth: 3, shadow: true);
-            end.With(Kit.Text(session.HotSeat || state.HalfMonth > 0 ? "Zug beenden" : "Monat beenden", 0, 16, 298, 40, 27, Theme.C("#fff6e6"), bold: true, serif: true, align: Align.Center));
-            end.With(Kit.Text($"weiter in {(next.StartsWith("die ") ? "" : "den ")}{next}{(next.Length > 12 ? "" : " · Leertaste")}", 0, 58, 298, 24, 15, Theme.C("#f0cfd6"), align: Align.Center));
+            end.With(Kit.Text(session.HotSeat || state.HalfMonth > 0 ? Lang.T("Zug beenden", "End turn") : Lang.T("Monat beenden", "End month"), 0, 16, 298, 40, 27, Theme.C("#fff6e6"), bold: true, serif: true, align: Align.Center));
+            end.With(Kit.Text(Lang.En ? $"on to {next}{(next.Length > 12 ? "" : " · Space")}" : $"weiter in {(next.StartsWith("die ") ? "" : "den ")}{next}{(next.Length > 12 ? "" : " · Leertaste")}", 0, 58, 298, 24, 15, Theme.C("#f0cfd6"), align: Align.Center));
             end.Tap(() => session.Run(new GameAction.EndTurn()));
             scene.With(end);
         }
@@ -208,10 +208,10 @@ public static class EstateScene
     /// <summary>Kurzfassung für die einzeiligen Schilder bei vielen Parzellen</summary>
     static string PlotShort(GameState state, Plot plot)
     {
-        if (plot.ForAuction) return "Auktion";
-        if (plot.Grape is not { } grapeId) return "Brache";
-        if (Rules.PlotAgeFactor(plot, state.Year) <= 0) return "Junganlage";
-        if (plot.HarvestedThisYear) return "gelesen";
+        if (plot.ForAuction) return Lang.T("Auktion", "Auction");
+        if (plot.Grape is not { } grapeId) return Lang.T("Brache", "Fallow");
+        if (Rules.PlotAgeFactor(plot, state.Year) <= 0) return Lang.T("Junganlage", "Young vines");
+        if (plot.HarvestedThisYear) return Lang.T("gelesen", "harvested");
         if (plot.IceWineGamble) return "Eiswein";
         if (plot.Oechsle > 0) return $"{Js.Round(plot.Oechsle)} °Oe";
         return Grapes.All[grapeId].Name.Replace(" (PIWI)", "");
@@ -220,13 +220,13 @@ public static class EstateScene
     static string PlotLine(GameState state, Plot plot)
     {
         var ha = $"{Util.FormatNumber(plot.Hectares, 1)} ha";
-        if (plot.ForAuction) return $"wird versteigert · {ha}";
-        if (plot.Grape is not { } grapeId) return $"Brache · {ha}";
+        if (plot.ForAuction) return Lang.En ? $"up for auction · {ha}" : $"wird versteigert · {ha}";
+        if (plot.Grape is not { } grapeId) return $"{Lang.T("Brache", "Fallow")} · {ha}";
         var grape = Grapes.All[grapeId].Name.Replace(" (PIWI)", "");
         var age = Rules.PlotAgeFactor(plot, state.Year);
-        if (age <= 0) return $"{grape} · Junganlage";
-        if (plot.HarvestedThisYear) return $"{grape} · gelesen";
-        if (plot.IceWineGamble) return $"{grape} · hängt für Eiswein";
+        if (age <= 0) return $"{grape} · {Lang.T("Junganlage", "young vines")}";
+        if (plot.HarvestedThisYear) return $"{grape} · {Lang.T("gelesen", "harvested")}";
+        if (plot.IceWineGamble) return Lang.En ? $"{grape} · hanging for Eiswein" : $"{grape} · hängt für Eiswein";
         if (plot.Oechsle > 0) return $"{grape} · {Js.Round(plot.Oechsle)} °Oe";
         return $"{grape} · {ha}";
     }
@@ -234,7 +234,7 @@ public static class EstateScene
     static SkiaControl Building(string name, double cx, double y, int badge, Action tap, double width = 130)
     {
         var layer = Kit.Layer(cx - width / 2, y, width + 20, 44);
-        layer.With(Kit.Box(0, 4, width, 34, Theme.C("#c71c1418"), 17).With(Kit.Text(name, 0, 4, width, 26, 19, Theme.Cream, align: Align.Center)));
+        layer.With(Kit.Box(0, 4, width, 34, Theme.C("#c71c1418"), 17).With(Kit.Centered(name, 0, width, 34, 19, Theme.Cream)));
         if (badge > 0) layer.With(Kit.Badge(badge, width - 6, 8, 13));
         layer.Tap(tap);
         return layer;
@@ -254,16 +254,16 @@ public static class EstateScene
         }
         foreach (var effect in player.Effects)
         {
-            lines.Add(($"{effect.Label}: {EffectText(effect)} · noch {effect.MonthsLeft} Mon.", Theme.Gold));
+            lines.Add((Lang.En ? $"{effect.Label}: {EffectText(effect)} · {effect.MonthsLeft} mo. left" : $"{effect.Label}: {EffectText(effect)} · noch {effect.MonthsLeft} Mon.", Theme.Gold));
         }
         var panel = Kit.Glass(1388, 24, 396, 248);
-        panel.With(Kit.Text("Neuigkeiten", 24, 14, 300, 32, 22, Theme.Gold, bold: true, serif: true));
+        panel.With(Kit.Text(Lang.T("Neuigkeiten", "News"), 24, 14, 300, 32, 22, Theme.Gold, bold: true, serif: true));
         const int perPage = 3;
         var pages = Math.Max(1, (int)Math.Ceiling(lines.Count / (double)perPage));
         var page = session.Nav.Page("gut.news", pages);
         if (lines.Count == 0)
         {
-            panel.With(Kit.Text("Keine besonderen Vorkommnisse im letzten Monat.", 24, 60, 348, 56, 18, Theme.CreamSoft, maxLines: 2));
+            panel.With(Kit.Text(Lang.T("Keine besonderen Vorkommnisse im letzten Monat.", "Nothing special happened last month."), 24, 60, 348, 56, 18, Theme.CreamSoft, maxLines: 2));
         }
         var y = 54.0;
         foreach (var line in lines.Skip(page * perPage).Take(perPage))
@@ -278,10 +278,10 @@ public static class EstateScene
 
     public static string EffectText(Effect effect)
     {
-        if (effect.Kind == EffectKind.Guard) return "Schutz vor Sabotage";
-        if (effect.Kind == EffectKind.Quality) return $"{(effect.Value > 0 ? "+" : "")}{Util.JsNumber(effect.Value)} Güte";
+        if (effect.Kind == EffectKind.Guard) return Lang.T("Schutz vor Sabotage", "Protection from sabotage");
+        if (effect.Kind == EffectKind.Quality) return $"{(effect.Value > 0 ? "+" : "")}{Util.JsNumber(effect.Value)} {Lang.T("Güte", "quality")}";
         var percent = Js.Round((effect.Value - 1) * 100);
-        var what = effect.Kind switch { EffectKind.Demand => "Nachfrage", EffectKind.Price => "Preise", _ => "Kosten" };
+        var what = effect.Kind switch { EffectKind.Demand => Lang.T("Nachfrage", "demand"), EffectKind.Price => Lang.T("Preise", "prices"), _ => Lang.T("Kosten", "costs") };
         return $"{(percent > 0 ? "+" : "−")}{Math.Abs(percent)} % {what}";
     }
 
@@ -294,7 +294,7 @@ public static class EstateScene
         var pages = Math.Max(1, (int)Math.Ceiling(hints.Count / (double)perPage));
         var page = session.Nav.Page("gut.tasks", pages);
         layer.With(Kit.Box(0, 0, 250, 32, Theme.C("#c71c1418"), 16)
-            .With(Kit.Text($"Diesen Monat · {hints.Count} {(hints.Count == 1 ? "Aufgabe" : "Aufgaben")}", 14, 5, 230, 24, 16, Theme.Cream)));
+            .With(Kit.Text(Lang.En ? $"This month · {hints.Count} {(hints.Count == 1 ? "task" : "tasks")}" : $"Diesen Monat · {hints.Count} {(hints.Count == 1 ? "Aufgabe" : "Aufgaben")}", 14, 5, 230, 24, 16, Theme.Cream)));
         if (pages > 1)
         {
             layer.With(Kit.Box(260, 0, 250, 32, Theme.C("#c71c1418"), 16));
@@ -309,20 +309,20 @@ public static class EstateScene
             card.With(Kit.Text(hint.Text, 26, 8, 284, 58, 16, Theme.Ink, bold: hint.Important, maxLines: 3));
             if (hint.Area == HintArea.Hof)
             {
-                if (hint.Text.StartsWith("Wähle"))
+                if (hint.Text.StartsWith("Wähle") || hint.Text.StartsWith("Choose"))
                 {
-                    card.With(Kit.Text("Zur Gutsplanung ›", 26, 68, 284, 22, 15, Theme.Wine, bold: true));
+                    card.With(Kit.Text(Lang.T("Zur Gutsplanung ›", "To estate planning ›"), 26, 68, 284, 22, 15, Theme.Wine, bold: true));
                     card.Tap(() => session.Nav.Show(Overlay.Plan));
                 }
                 else if (session.Player.Decision is not null)
                 {
-                    card.With(Kit.Text("Entscheiden ›", 26, 68, 284, 22, 15, Theme.Wine, bold: true));
+                    card.With(Kit.Text(Lang.T("Entscheiden ›", "Decide ›"), 26, 68, 284, 22, 15, Theme.Wine, bold: true));
                     card.Tap(() => session.Nav.Show(Overlay.Decision));
                 }
             }
             else
             {
-                card.With(Kit.Text($"Zum {Navigator.LabelFor(target)} ›", 26, 68, 284, 22, 15, Theme.Wine, bold: true));
+                card.With(Kit.Text(Lang.En ? $"Go to {Navigator.LabelFor(target)} ›" : $"Zum {Navigator.LabelFor(target)} ›", 26, 68, 284, 22, 15, Theme.Wine, bold: true));
                 card.Tap(() => session.Nav.Go(target));
             }
             layer.With(card);

@@ -106,7 +106,7 @@ public static class Events
     public static string Reputation(EventContext ctx, double delta)
     {
         var change = Rules.ChangeReputation(ctx.Player, delta);
-        return $"Bekanntheit {(change >= 0 ? "+" : "")}{change.ToString("F1", CultureInfo.InvariantCulture)}";
+        return (Lang.En ? $"reputation {(change >= 0 ? "+" : "")}{change.ToString("F1", CultureInfo.InvariantCulture)}" : $"Bekanntheit {(change >= 0 ? "+" : "")}{change.ToString("F1", CultureInfo.InvariantCulture)}");
     }
 
     public static void AddEffect(Player player, EffectKind kind, double value, int months, string label)
@@ -157,22 +157,22 @@ public static class Events
         new()
         {
             Id = "wandergruppe", Rarity = Rarity.Alltag, Tone = LogTone.Good, Months = [4, 5, 6, 7, 8, 9, 10],
-            Apply = c => $"Eine Wandergruppe kehrt spontan zur Weinprobe ein: {Money(c, c.Between(200, 800, 50))}.",
+            Apply = c => (Lang.En ? $"A group of hikers drops in spontaneously for a wine tasting: {Money(c, c.Between(200, 800, 50))}." : $"Eine Wandergruppe kehrt spontan zur Weinprobe ein: {Money(c, c.Between(200, 800, 50))}."),
         },
         new()
         {
             Id = "pumpe", Rarity = Rarity.Alltag, Tone = LogTone.Bad,
-            Apply = c => $"Die Weinpumpe streikt – Reparatur {Money(c, -c.Between(200, 700, 50))}.",
+            Apply = c => (Lang.En ? $"The wine pump gives out – repair {Money(c, -c.Between(200, 700, 50))}." : $"Die Weinpumpe streikt – Reparatur {Money(c, -c.Between(200, 700, 50))}."),
         },
         new()
         {
             Id = "lokalblatt", Rarity = Rarity.Alltag, Tone = LogTone.Good,
-            Apply = c => $"Das Lokalblatt bringt ein kleines Porträt über dein Weingut ({Reputation(c, 1)}).",
+            Apply = c => (Lang.En ? $"The local paper runs a small profile of your estate ({Reputation(c, 1)})." : $"Das Lokalblatt bringt ein kleines Porträt über dein Weingut ({Reputation(c, 1)})."),
         },
         new()
         {
             Id = "bewertung", Rarity = Rarity.Alltag, Tone = LogTone.Bad,
-            Apply = c => $"Eine verärgerte Online-Bewertung macht die Runde ({Reputation(c, -1)}).",
+            Apply = c => (Lang.En ? $"An angry online review is making the rounds ({Reputation(c, -1)})." : $"Eine verärgerte Online-Bewertung macht die Runde ({Reputation(c, -1)})."),
         },
         new()
         {
@@ -180,7 +180,7 @@ public static class Events
             Apply = c =>
             {
                 DamageCrop(BearingPlots(c), 0.96);
-                return "Ein Starenschwarm fällt über die reifen Trauben her – ein paar Prozent der Ernte sind weg.";
+                return Lang.T("Ein Starenschwarm fällt über die reifen Trauben her – ein paar Prozent der Ernte sind weg.", "A flock of starlings swoops down on the ripe grapes – a few percent of the harvest is gone.");
             },
         },
         new()
@@ -190,7 +190,7 @@ public static class Events
             {
                 var plot = RandomOf(c, BearingPlots(c));
                 DamageCrop([plot], 0.94);
-                return $"Wildschweine haben in der Lage {plot.Name} gewütet – rund 6 % weniger Trauben.";
+                return (Lang.En ? $"Wild boars have ravaged {plot.Name} – about 6 % fewer grapes." : $"Wildschweine haben in der Lage {plot.Name} gewütet – rund 6 % weniger Trauben.");
             },
         },
         new()
@@ -199,48 +199,48 @@ public static class Events
             Apply = c =>
             {
                 var (sold, revenue) = SellBottles(c, SellableLots(c), c.Between(60, 120, 10), 1);
-                return $"Ein Stammkunde bestellt {Util.JsNumber(sold)} Flaschen für eine Hochzeit: +{Util.FormatEuro(revenue)}.";
+                return (Lang.En ? $"A regular customer orders {Util.JsNumber(sold)} bottles for a wedding: +{Util.FormatEuro(revenue)}." : $"Ein Stammkunde bestellt {Util.JsNumber(sold)} Flaschen für eine Hochzeit: +{Util.FormatEuro(revenue)}.");
             },
         },
         new()
         {
             Id = "steuer", Rarity = Rarity.Alltag, Tone = LogTone.Good,
-            Apply = c => $"Das Finanzamt erstattet zu viel gezahlte Steuern: {Money(c, c.Between(500, 2000, 100))}.",
+            Apply = c => (Lang.En ? $"The tax office refunds overpaid taxes: {Money(c, c.Between(500, 2000, 100))}." : $"Das Finanzamt erstattet zu viel gezahlte Steuern: {Money(c, c.Between(500, 2000, 100))}."),
         },
         new()
         {
             Id = "traktor", Rarity = Rarity.Alltag, Tone = LogTone.Bad,
-            Apply = c => $"Der Schmalspurtraktor braucht neue Reifen: {Money(c, -c.Between(300, 900, 100))}.",
+            Apply = c => (Lang.En ? $"The narrow-track tractor needs new tires: {Money(c, -c.Between(300, 900, 100))}." : $"Der Schmalspurtraktor braucht neue Reifen: {Money(c, -c.Between(300, 900, 100))}."),
         },
         new()
         {
             Id = "sommelier", Rarity = Rarity.Alltag, Tone = LogTone.Good,
-            Apply = c => $"Ein Sommelier empfiehlt deinen Wein im Restaurant der Kreisstadt ({Reputation(c, 1.5)}).",
+            Apply = c => (Lang.En ? $"A sommelier recommends your wine at the restaurant in the county town ({Reputation(c, 1.5)})." : $"Ein Sommelier empfiehlt deinen Wein im Restaurant der Kreisstadt ({Reputation(c, 1.5)})."),
         },
         new()
         {
             Id = "weinfest", Rarity = Rarity.Alltag, Tone = LogTone.Good, Months = [5, 6, 7, 8, 9],
             Apply = c =>
             {
-                AddEffect(c.Player, EffectKind.Demand, 1.2, 1, "Weinfest im Ort");
-                return "Weinfest im Ort: Nächsten Monat kommen 20 % mehr Kunden in den Hofladen.";
+                AddEffect(c.Player, EffectKind.Demand, 1.2, 1, Lang.T("Weinfest im Ort", "Local wine festival"));
+                return Lang.T("Weinfest im Ort: Nächsten Monat kommen 20 % mehr Kunden in den Hofladen.", "Local wine festival: next month 20 % more customers visit the farm shop.");
             },
         },
         new()
         {
             Id = "rehe", Rarity = Rarity.Alltag, Tone = LogTone.Bad, Months = [4, 5, 6],
             When = c => c.Player.Plots.Any(p => p.Grape is not null && Rules.PlotAgeFactor(p, c.State.Year) == 0),
-            Apply = c => $"Rehe knabbern an der Junganlage – ein Wildschutzzaun muss her: {Money(c, -c.Between(300, 800, 50))}.",
+            Apply = c => (Lang.En ? $"Deer nibble at the young vines – a game fence is needed: {Money(c, -c.Between(300, 800, 50))}." : $"Rehe knabbern an der Junganlage – ein Wildschutzzaun muss her: {Money(c, -c.Between(300, 800, 50))}."),
         },
         new()
         {
             Id = "starkregen", Rarity = Rarity.Alltag, Tone = LogTone.Bad, Months = [3, 4, 5, 6, 7, 8, 9, 10],
-            Apply = c => $"Starkregen spült Erde aus den Rebzeilen – Aufräumarbeiten: {Money(c, -c.Between(200, 600, 50))}.",
+            Apply = c => (Lang.En ? $"Heavy rain washes soil out of the vine rows – cleanup: {Money(c, -c.Between(200, 600, 50))}." : $"Starkregen spült Erde aus den Rebzeilen – Aufräumarbeiten: {Money(c, -c.Between(200, 600, 50))}."),
         },
         new()
         {
             Id = "praktikum", Rarity = Rarity.Alltag, Tone = LogTone.Good,
-            Apply = c => $"Eine Praktikantin packt kräftig mit an – gesparte Aushilfslöhne: {Money(c, c.Between(300, 900, 50))}.",
+            Apply = c => (Lang.En ? $"An intern pitches in hard – saved temp wages: {Money(c, c.Between(300, 900, 50))}." : $"Eine Praktikantin packt kräftig mit an – gesparte Aushilfslöhne: {Money(c, c.Between(300, 900, 50))}."),
         },
         new()
         {
@@ -250,7 +250,7 @@ public static class Events
                 var lot = RandomOf(c, c.Player.Bottles.Where(l => l.Bottles >= 10).ToList());
                 var n = Math.Min(lot.Bottles, c.Between(10, 30));
                 Rules.RemoveBottles(c.Player, lot, n);
-                return $"Korkfehler: {Util.JsNumber(n)} Flaschen {Rules.WineLabel(lot)} müssen weggekippt werden.";
+                return (Lang.En ? $"Cork taint: {Util.JsNumber(n)} bottles of {Rules.WineLabel(lot)} have to be poured out." : $"Korkfehler: {Util.JsNumber(n)} Flaschen {Rules.WineLabel(lot)} müssen weggekippt werden.");
             },
         },
 
@@ -260,8 +260,8 @@ public static class Events
             Id = "weinfuehrer", Rarity = Rarity.Gelegentlich, Tone = LogTone.Good,
             Apply = c =>
             {
-                AddEffect(c.Player, EffectKind.Demand, 1.2, 3, "Empfehlung im Weinführer");
-                return $"Ein Weinführer nennt dein Gut einen Geheimtipp ({Reputation(c, 4)}, drei Monate 20 % mehr Nachfrage).";
+                AddEffect(c.Player, EffectKind.Demand, 1.2, 3, Lang.T("Empfehlung im Weinführer", "Wine guide recommendation"));
+                return (Lang.En ? $"A wine guide calls your estate an insider tip ({Reputation(c, 4)}, 20 % more demand for three months)." : $"Ein Weinführer nennt dein Gut einen Geheimtipp ({Reputation(c, 4)}, drei Monate 20 % mehr Nachfrage).");
             },
         },
         new()
@@ -269,14 +269,14 @@ public static class Events
             Id = "glas", Rarity = Rarity.Gelegentlich, Tone = LogTone.Bad,
             Apply = c =>
             {
-                AddEffect(c.Player, EffectKind.Costs, 1.08, 3, "Teures Verpackungsmaterial");
-                return "Glasflaschen und Kartons werden knapp: Drei Monate lang 8 % höhere Betriebskosten.";
+                AddEffect(c.Player, EffectKind.Costs, 1.08, 3, Lang.T("Teures Verpackungsmaterial", "Expensive packaging"));
+                return Lang.T("Glasflaschen und Kartons werden knapp: Drei Monate lang 8 % höhere Betriebskosten.", "Glass bottles and cartons are in short supply: 8 % higher operating costs for three months.");
             },
         },
         new()
         {
             Id = "erntehelfer", Rarity = Rarity.Gelegentlich, Tone = LogTone.Bad, Months = [8, 9, 10], When = HasBearing,
-            Apply = c => $"Die Erntehelfer bleiben aus – teure Ersatzkräfte müssen her: {Money(c, -c.Between(1500, 3000, 100))}.",
+            Apply = c => (Lang.En ? $"The harvest workers don't show up – costly replacements are needed: {Money(c, -c.Between(1500, 3000, 100))}." : $"Die Erntehelfer bleiben aus – teure Ersatzkräfte müssen her: {Money(c, -c.Between(1500, 3000, 100))}."),
         },
         new()
         {
@@ -284,7 +284,7 @@ public static class Events
             Apply = c =>
             {
                 var (sold, revenue) = SellBottles(c, SellableLots(c, true), 300, 0.9);
-                return $"Eine Restaurantkette nimmt {Util.JsNumber(sold)} Flaschen auf einen Schlag ab: +{Util.FormatEuro(revenue)}.";
+                return (Lang.En ? $"A restaurant chain takes {Util.JsNumber(sold)} bottles in one go: +{Util.FormatEuro(revenue)}." : $"Eine Restaurantkette nimmt {Util.JsNumber(sold)} Flaschen auf einen Schlag ab: +{Util.FormatEuro(revenue)}.");
             },
         },
         new()
@@ -296,23 +296,23 @@ public static class Events
                 var lost = Math.Max(1, Js.Round(batch.Hectoliters * (0.05 + c.Roll() * 0.05)));
                 var label = Rules.WineLabel(batch);
                 Rules.RemoveBatchVolume(c.Player, batch, Math.Min(lost, batch.Hectoliters));
-                return $"Wasserrohrbruch im Keller: {Util.JsNumber(lost)} hl {label} sind verdorben.";
+                return (Lang.En ? $"Burst water pipe in the cellar: {Util.JsNumber(lost)} hl {label} are spoiled." : $"Wasserrohrbruch im Keller: {Util.JsNumber(lost)} hl {label} sind verdorben.");
             },
         },
         new()
         {
             Id = "foerderung", Rarity = Rarity.Gelegentlich, Tone = LogTone.Good,
-            Apply = c => $"Ein Förderprogramm für Steillagen und Kulturlandschaft zahlt aus: {Money(c, c.Between(4000, 10_000, 500))}.",
+            Apply = c => (Lang.En ? $"A subsidy program for steep slopes and cultural landscape pays out: {Money(c, c.Between(4000, 10_000, 500))}." : $"Ein Förderprogramm für Steillagen und Kulturlandschaft zahlt aus: {Money(c, c.Between(4000, 10_000, 500))}."),
         },
         new()
         {
             Id = "firmenfeier", Rarity = Rarity.Gelegentlich, Tone = LogTone.Good,
-            Apply = c => $"Ein Unternehmen bucht dein Weingut für seine Sommerfeier mit Weinprobe: {Money(c, c.Between(2000, 5000, 100))}.",
+            Apply = c => (Lang.En ? $"A company books your estate for its summer party with a wine tasting: {Money(c, c.Between(2000, 5000, 100))}." : $"Ein Unternehmen bucht dein Weingut für seine Sommerfeier mit Weinprobe: {Money(c, c.Between(2000, 5000, 100))}."),
         },
         new()
         {
             Id = "fernsehen", Rarity = Rarity.Gelegentlich, Tone = LogTone.Good,
-            Apply = c => $"Das Regionalfernsehen dreht einen Beitrag auf deinem Hof ({Reputation(c, 3)}).",
+            Apply = c => (Lang.En ? $"Regional TV shoots a feature at your estate ({Reputation(c, 3)})." : $"Das Regionalfernsehen dreht einen Beitrag auf deinem Hof ({Reputation(c, 3)})."),
         },
         new()
         {
@@ -328,7 +328,7 @@ public static class Events
                     Rules.RemoveBottles(c.Player, lot, n);
                     stolen += n;
                 }
-                return $"Einbruch im Flaschenlager: {Util.JsNumber(stolen)} Flaschen der besten Weine sind gestohlen.";
+                return (Lang.En ? $"Break-in at the bottle store: {Util.JsNumber(stolen)} bottles of your best wines were stolen." : $"Einbruch im Flaschenlager: {Util.JsNumber(stolen)} Flaschen der besten Weine sind gestohlen.");
             },
         },
         new()
@@ -336,8 +336,8 @@ public static class Events
             Id = "strom", Rarity = Rarity.Gelegentlich, Tone = LogTone.Bad,
             Apply = c =>
             {
-                AddEffect(c.Player, EffectKind.Costs, 1.05, 6, "Höhere Energiepreise");
-                return "Der Stromversorger erhöht die Preise: Ein halbes Jahr lang 5 % höhere Betriebskosten.";
+                AddEffect(c.Player, EffectKind.Costs, 1.05, 6, Lang.T("Höhere Energiepreise", "Higher energy prices"));
+                return Lang.T("Der Stromversorger erhöht die Preise: Ein halbes Jahr lang 5 % höhere Betriebskosten.", "The power company raises its prices: 5 % higher operating costs for half a year.");
             },
         },
         new()
@@ -345,8 +345,8 @@ public static class Events
             Id = "influencer", Rarity = Rarity.Gelegentlich, Tone = LogTone.Good,
             Apply = c =>
             {
-                AddEffect(c.Player, EffectKind.Demand, 1.3, 2, "Video einer Influencerin");
-                return "Eine Influencerin filmt beim Weinwandern auf deinem Hof – zwei Monate lang 30 % mehr Nachfrage.";
+                AddEffect(c.Player, EffectKind.Demand, 1.3, 2, Lang.T("Video einer Influencerin", "Influencer video"));
+                return Lang.T("Eine Influencerin filmt beim Weinwandern auf deinem Hof – zwei Monate lang 30 % mehr Nachfrage.", "An influencer films a wine hike at your estate – 30 % more demand for two months.");
             },
         },
         new()
@@ -354,8 +354,8 @@ public static class Events
             Id = "rebschnitt", Rarity = Rarity.Gelegentlich, Tone = LogTone.Good, Months = [1, 2, 3], When = c => PlantedPlots(c).Count > 0,
             Apply = c =>
             {
-                AddEffect(c.Player, EffectKind.Quality, 3, 13 - c.State.Month, "Rebschnitt vom Profi");
-                return "Ein erfahrener Rebschnitt-Profi hilft im Weinberg – der Jahrgang wird besser (+3 Güte).";
+                AddEffect(c.Player, EffectKind.Quality, 3, 13 - c.State.Month, Lang.T("Rebschnitt vom Profi", "Pruning by a pro"));
+                return Lang.T("Ein erfahrener Rebschnitt-Profi hilft im Weinberg – der Jahrgang wird besser (+3 Güte).", "An experienced pruning pro helps in the vineyard – the vintage gets better (+3 quality).");
             },
         },
         new()
@@ -364,21 +364,21 @@ public static class Events
             Apply = c =>
             {
                 var plot = RandomOf(c, BearingPlots(c));
-                Defense.CropLoss(c.State, c.Player, [plot], 0.85, "Sturmböen"); // versicherbares Wetter
-                return $"Ein Gewitter mit Sturmböen reißt in der Lage {plot.Name} Triebe ab – 15 % weniger Ertrag.";
+                Defense.CropLoss(c.State, c.Player, [plot], 0.85, Lang.T("Sturmböen", "storm gusts")); // versicherbares Wetter
+                return (Lang.En ? $"A thunderstorm with gusts tears off shoots in {plot.Name} – 15 % less yield." : $"Ein Gewitter mit Sturmböen reißt in der Lage {plot.Name} Triebe ab – 15 % weniger Ertrag.");
             },
         },
         new()
         {
             Id = "zahlungsausfall", Rarity = Rarity.Gelegentlich, Tone = LogTone.Bad,
-            Apply = c => $"Ein Großkunde ist pleite und zahlt seine Rechnung nicht: {Money(c, -c.Between(1500, 4000, 100))}.",
+            Apply = c => (Lang.En ? $"A major customer goes bankrupt and doesn't pay their bill: {Money(c, -c.Between(1500, 4000, 100))}." : $"Ein Großkunde ist pleite und zahlt seine Rechnung nicht: {Money(c, -c.Between(1500, 4000, 100))}."),
         },
 
         // ── Selten: deutliche Folgen ─────────────────────────────────────────────────
         new()
         {
             Id = "sturm", Rarity = Rarity.Selten, Tone = LogTone.Bad,
-            Apply = c => $"Ein Orkan deckt das Dach der Kelterhalle ab: {Money(c, -c.Between(6000, 12_000, 1000))}.",
+            Apply = c => (Lang.En ? $"A hurricane rips the roof off the pressing hall: {Money(c, -c.Between(6000, 12_000, 1000))}." : $"Ein Orkan deckt das Dach der Kelterhalle ab: {Money(c, -c.Between(6000, 12_000, 1000))}."),
         },
         new()
         {
@@ -391,15 +391,16 @@ public static class Events
                 var suitable = Grapes.All.Keys.Where(g => Regions.All[player.RegionId].Suitability[g] >= 0).ToList();
                 GrapeId? grape = c.Roll() < 0.5 ? suitable[(int)Math.Floor(c.Roll() * suitable.Count)] : null;
                 var taken = new HashSet<string>(player.Plots.Select(p => p.Name));
-                var name = "Erbstück";
-                for (var n = 2; taken.Contains(name); n++) name = $"Erbstück {n}";
+                var baseName = Lang.T("Erbstück", "Inherited plot");
+                var name = baseName;
+                for (var n = 2; taken.Contains(name); n++) name = $"{baseName} {n}";
                 player.Plots.Add(new Plot
                 {
                     Id = Util.NewId(state, "plot"), Name = name, Hectares = hectares, Grape = grape,
                     PlantedYear = grape is not null ? state.Year - 20 : null, Site = 0,
                     Oechsle = 0, Health = 1, CropFactor = 1, HarvestedThisYear = false, Botrytis = false, IceWineGamble = false,
                 });
-                return $"Eine Großtante vererbt dir einen Weinberg: {Util.JsNumber(hectares)} ha {(grape is { } inherited ? Grapes.All[inherited].Name : "Brache")}.";
+                return (Lang.En ? $"A great-aunt leaves you a vineyard: {Util.JsNumber(hectares)} ha {(grape is { } inheritedEn ? Grapes.All[inheritedEn].Name : "fallow")}." : $"Eine Großtante vererbt dir einen Weinberg: {Util.JsNumber(hectares)} ha {(grape is { } inherited ? Grapes.All[inherited].Name : "Brache")}.");
             },
         },
         new()
@@ -408,7 +409,7 @@ public static class Events
             Apply = c =>
             {
                 c.Player.Points += 15;
-                return $"Der Weinbauverband kürt dich zum Winzer des Jahres im Gebiet: +15 Punkte, {Reputation(c, 8)}.";
+                return (Lang.En ? $"The winegrowers' association names you Winemaker of the Year in the region: +15 points, {Reputation(c, 8)}." : $"Der Weinbauverband kürt dich zum Winzer des Jahres im Gebiet: +15 Punkte, {Reputation(c, 8)}.");
             },
         },
         new()
@@ -419,7 +420,7 @@ public static class Events
                 var plot = RandomOf(c, PlantedPlots(c));
                 plot.Health = Math.Max(0, plot.Health - 0.3);
                 plot.CropFactor *= 0.7;
-                return $"Reblaus-Befall in der Lage {plot.Name}! Bekämpfung {Money(c, -3000)}, 30 % weniger Ertrag in diesem Jahr.";
+                return (Lang.En ? $"Phylloxera infestation in {plot.Name}! Control {Money(c, -3000)}, 30 % less yield this year." : $"Reblaus-Befall in der Lage {plot.Name}! Bekämpfung {Money(c, -3000)}, 30 % weniger Ertrag in diesem Jahr.");
             },
         },
         new()
@@ -427,25 +428,25 @@ public static class Events
             Id = "handelskette", Rarity = Rarity.Selten, Tone = LogTone.Good,
             Apply = c =>
             {
-                AddEffect(c.Player, EffectKind.Demand, 1.5, 6, "Listung bei einer Handelskette");
-                return "Eine Feinkostkette listet deine Weine: Ein halbes Jahr lang 50 % mehr Absatz ab Hof und online.";
+                AddEffect(c.Player, EffectKind.Demand, 1.5, 6, Lang.T("Listung bei einer Handelskette", "Retail chain listing"));
+                return Lang.T("Eine Feinkostkette listet deine Weine: Ein halbes Jahr lang 50 % mehr Absatz ab Hof und online.", "A delicatessen chain lists your wines: 50 % more sales at the cellar door and online for half a year.");
             },
         },
         new()
         {
             Id = "lagerbrand", Rarity = Rarity.Selten, Tone = LogTone.Bad, When = c => BottleCount(c.Player.Bottles) >= 200,
-            Apply = c => $"Ein Schwelbrand im Flaschenlager: {Util.JsNumber(DestroyBottles(c, 0.2))} Flaschen sind hinüber.",
+            Apply = c => (Lang.En ? $"A smoldering fire in the bottle store: {Util.JsNumber(DestroyBottles(c, 0.2))} bottles are ruined." : $"Ein Schwelbrand im Flaschenlager: {Util.JsNumber(DestroyBottles(c, 0.2))} Flaschen sind hinüber."),
         },
         new()
         {
             Id = "rechtsstreit", Rarity = Rarity.Selten, Tone = LogTone.Bad,
             Apply = c =>
-                $"Ein Nachbar verklagt dich wegen eines Grenzsteins – Anwalt und Vergleich: {Money(c, -c.Between(5000, 10_000, 1000))}.",
+                (Lang.En ? $"A neighbor sues you over a boundary stone – lawyer and settlement: {Money(c, -c.Between(5000, 10_000, 1000))}." : $"Ein Nachbar verklagt dich wegen eines Grenzsteins – Anwalt und Vergleich: {Money(c, -c.Between(5000, 10_000, 1000))}."),
         },
         new()
         {
             Id = "filmdreh", Rarity = Rarity.Selten, Tone = LogTone.Good,
-            Apply = c => $"Ein Filmteam dreht eine Fernsehserie auf deinem Hof und zahlt Drehgebühr: {Money(c, c.Between(10_000, 20_000, 1000))}.",
+            Apply = c => (Lang.En ? $"A film crew shoots a TV series at your estate and pays a location fee: {Money(c, c.Between(10_000, 20_000, 1000))}." : $"Ein Filmteam dreht eine Fernsehserie auf deinem Hof und zahlt Drehgebühr: {Money(c, c.Between(10_000, 20_000, 1000))}."),
         },
         new()
         {
@@ -453,7 +454,7 @@ public static class Events
             Apply = c =>
             {
                 c.Player.BarriqueCapacityHl += 20;
-                return "Ein Mäzen aus der Stadt schenkt dir neue Barriquefässer: +20 hl Barrique-Kapazität.";
+                return Lang.T("Ein Mäzen aus der Stadt schenkt dir neue Barriquefässer: +20 hl Barrique-Kapazität.", "A patron from the city gives you new barrique barrels: +20 hl barrique capacity.");
             },
         },
         new()
@@ -461,8 +462,8 @@ public static class Events
             Id = "preiskampf", Rarity = Rarity.Selten, Tone = LogTone.Bad,
             Apply = c =>
             {
-                AddEffect(c.Player, EffectKind.Price, 0.92, 4, "Preiskampf der Discounter");
-                return "Discounter verramschen Wein aus deinem Gebiet: Vier Monate lang 8 % niedrigere Preise.";
+                AddEffect(c.Player, EffectKind.Price, 0.92, 4, Lang.T("Preiskampf der Discounter", "Discounter price war"));
+                return Lang.T("Discounter verramschen Wein aus deinem Gebiet: Vier Monate lang 8 % niedrigere Preise.", "Discounters are dumping wine from your region: 8 % lower prices for four months.");
             },
         },
         new()
@@ -474,7 +475,7 @@ public static class Events
                 var lost = Math.Max(1, Js.Round(batch.Hectoliters * 0.3));
                 var label = Rules.WineLabel(batch);
                 Rules.RemoveBatchVolume(c.Player, batch, Math.Min(lost, batch.Hectoliters));
-                return $"Ein Tankventil bricht über Nacht: {Util.JsNumber(lost)} hl {label} laufen in den Gully.";
+                return (Lang.En ? $"A tank valve breaks overnight: {Util.JsNumber(lost)} hl {label} run down the drain." : $"Ein Tankventil bricht über Nacht: {Util.JsNumber(lost)} hl {label} laufen in den Gully.");
             },
         },
 
@@ -484,8 +485,8 @@ public static class Events
             Id = "jahrhundertunwetter", Rarity = Rarity.SehrSelten, Tone = LogTone.Bad, Months = [5, 6, 7, 8, 9], When = HasBearing,
             Apply = c =>
             {
-                Defense.CropLoss(c.State, c.Player, BearingPlots(c), 0.3, "das Jahrhundertunwetter");
-                return $"Jahrhundertunwetter! Hagel und Sturzfluten vernichten 70 % der Trauben, Schäden an Mauern und Wegen: {Money(c, -20_000)}.";
+                Defense.CropLoss(c.State, c.Player, BearingPlots(c), 0.3, Lang.T("das Jahrhundertunwetter", "the storm of the century"));
+                return (Lang.En ? $"Storm of the century! Hail and flash floods destroy 70 % of the grapes, damage to walls and paths: {Money(c, -20_000)}." : $"Jahrhundertunwetter! Hagel und Sturzfluten vernichten 70 % der Trauben, Schäden an Mauern und Wegen: {Money(c, -20_000)}.");
             },
         },
         new()
@@ -501,7 +502,7 @@ public static class Events
                     Rules.RemoveBatchVolume(c.Player, batch, lost);
                 }
                 var bottles = DestroyBottles(c, 0.3);
-                return $"Großbrand im Weinkeller! {Util.JsNumber(hl)} hl Wein und {Util.JsNumber(bottles)} Flaschen verloren, Sanierung {Money(c, -25_000)}.";
+                return (Lang.En ? $"Major fire in the wine cellar! {Util.JsNumber(hl)} hl of wine and {Util.JsNumber(bottles)} bottles lost, restoration {Money(c, -25_000)}." : $"Großbrand im Weinkeller! {Util.JsNumber(hl)} hl Wein und {Util.JsNumber(bottles)} Flaschen verloren, Sanierung {Money(c, -25_000)}.");
             },
         },
         new()
@@ -510,14 +511,14 @@ public static class Events
             Apply = c =>
             {
                 c.Player.Points += 40;
-                AddEffect(c.Player, EffectKind.Demand, 2, 6, "100 Punkte vom Weinpapst");
-                return $"Sensation: Ein weltberühmter Weinkritiker vergibt 100 Punkte! +40 Punkte, {Reputation(c, 20)}, ein halbes Jahr doppelte Nachfrage.";
+                AddEffect(c.Player, EffectKind.Demand, 2, 6, Lang.T("100 Punkte vom Weinpapst", "100 points from the wine pope"));
+                return (Lang.En ? $"Sensation: A world-famous wine critic awards 100 points! +40 points, {Reputation(c, 20)}, double demand for half a year." : $"Sensation: Ein weltberühmter Weinkritiker vergibt 100 Punkte! +40 Punkte, {Reputation(c, 20)}, ein halbes Jahr doppelte Nachfrage.");
             },
         },
         new()
         {
             Id = "vermoegen", Rarity = Rarity.SehrSelten, Tone = LogTone.Good,
-            Apply = c => $"Ein ausgewanderter Onkel hinterlässt dir sein Vermögen: {Money(c, 150_000)}!",
+            Apply = c => (Lang.En ? $"An uncle who emigrated leaves you his fortune: {Money(c, 150_000)}!" : $"Ein ausgewanderter Onkel hinterlässt dir sein Vermögen: {Money(c, 150_000)}!"),
         },
         new()
         {
@@ -526,7 +527,7 @@ public static class Events
             {
                 var plot = RandomOf(c, c.Player.Plots);
                 c.Player.Plots = c.Player.Plots.Where(p => !ReferenceEquals(p, plot)).ToList();
-                return $"Hangrutsch! Die Lage {plot.Name} ({Util.JsNumber(plot.Hectares)} ha) ist abgerutscht und für immer verloren.";
+                return (Lang.En ? $"Landslide! The plot {plot.Name} ({Util.JsNumber(plot.Hectares)} ha) has slid away and is lost forever." : $"Hangrutsch! Die Lage {plot.Name} ({Util.JsNumber(plot.Hectares)} ha) ist abgerutscht und für immer verloren.");
             },
         },
         new()
@@ -539,9 +540,9 @@ public static class Events
                 foreach (var p in state.Players.Where(q => q.RegionId == player.RegionId && !q.Bankrupt).ToList())
                 {
                     Rules.ChangeReputation(p, -10);
-                    AddEffect(p, EffectKind.Price, 0.8, 12, "Weinskandal im Anbaugebiet");
+                    AddEffect(p, EffectKind.Price, 0.8, 12, Lang.T("Weinskandal im Anbaugebiet", "Wine scandal in the region"));
                 }
-                return $"Weinskandal im Anbaugebiet {Regions.All[player.RegionId].Name}: Eine Großkellerei hat gepanscht. Alle Winzer der Region verlieren Ansehen, ein Jahr lang 20 % niedrigere Preise.";
+                return (Lang.En ? $"Wine scandal in the {Regions.All[player.RegionId].Name} region: A large winery has adulterated its wine. All winemakers in the region lose standing, 20 % lower prices for a year." : $"Weinskandal im Anbaugebiet {Regions.All[player.RegionId].Name}: Eine Großkellerei hat gepanscht. Alle Winzer der Region verlieren Ansehen, ein Jahr lang 20 % niedrigere Preise.");
             },
         },
         new()
@@ -549,8 +550,8 @@ public static class Events
             Id = "exportboom", Rarity = Rarity.SehrSelten, Tone = LogTone.Good,
             Apply = c =>
             {
-                AddEffect(c.Player, EffectKind.Price, 1.2, 12, "Exportboom");
-                return "Deutscher Wein ist in Asien plötzlich Kult: Ein Jahr lang 20 % höhere Preise.";
+                AddEffect(c.Player, EffectKind.Price, 1.2, 12, Lang.T("Exportboom", "Export boom"));
+                return Lang.T("Deutscher Wein ist in Asien plötzlich Kult: Ein Jahr lang 20 % höhere Preise.", "German wine is suddenly cult in Asia: 20 % higher prices for a year.");
             },
         },
     ];
@@ -560,13 +561,13 @@ public static class Events
     {
         if (state.BulkCrisisMonths > 0)
         {
-            if (--state.BulkCrisisMonths == 0) Util.AddLog(state, null, "Die Großkellereien zahlen wieder normale Fassweinpreise.");
+            if (--state.BulkCrisisMonths == 0) Util.AddLog(state, null, Lang.T("Die Großkellereien zahlen wieder normale Fassweinpreise.", "The large wineries pay normal bulk wine prices again."));
             return;
         }
         if (Rng.NextFloat(state.Rng) < CrisisChance)
         {
             state.BulkCrisisMonths = CrisisMonths;
-            Util.AddLog(state, null, $"Eine Großkellerei ist pleite: {CrisisMonths} Monate lang gibt es nur den halben Fassweinpreis.", LogTone.Bad);
+            Util.AddLog(state, null, (Lang.En ? $"A large winery has gone bankrupt: only half the bulk wine price for {CrisisMonths} months." : $"Eine Großkellerei ist pleite: {CrisisMonths} Monate lang gibt es nur den halben Fassweinpreis."), LogTone.Bad);
         }
     }
 
@@ -626,7 +627,7 @@ public static class Events
         foreach (var effect in player.Effects) effect.MonthsLeft--;
         foreach (var effect in player.Effects.Where(e => e.MonthsLeft <= 0).ToList())
         {
-            Util.AddLog(state, player.Id, $"Vorbei: {effect.Label}.");
+            Util.AddLog(state, player.Id, (Lang.En ? $"Over: {effect.Label}." : $"Vorbei: {effect.Label}."));
         }
         player.Effects = player.Effects.Where(e => e.MonthsLeft > 0).ToList();
     }
